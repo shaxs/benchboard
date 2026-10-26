@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://benchboard.local.neutral/schemas/submission.schema.json",
+  "title": "FrozenSubmission (neutral BenchBoard contract)",
+  "description": "A frozen participant submission: copy plus verified source inventory, bound to one run manifest and rechecked before evaluation. The inventory holds allowed application source/config/tests and participant additions under the documented policy, excludes .git, dependencies, build caches, DSH runtime metadata and BenchBoard state, and rejects traversal, links/special files and case-colliding paths. The preserved tree digest algorithm — POSIX relative paths sorted lexically, pairs [path, sha256(bytes)], sha256 over the JSON pair list — is recomputed and compared, never trusted, by packages/core/manifest.mjs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "frozenSubmissionId",
+    "manifestId",
+    "runId",
+    "frozenAt",
+    "hashAlgorithm",
+    "inventory",
+    "treeDigest",
+    "byteCount",
+    "fileCount",
+    "freezeProcedure"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "$comment": "Schema major is the discriminator; only major 1 is read and unknown majors are rejected, never coerced.",
+      "type": "string",
+      "pattern": "^1\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+    },
+    "kind": {
+      "const": "FrozenSubmission"
+    },
+    "frozenSubmissionId": {
+      "type": "string",
+      "minLength": 3
+    },
+    "manifestId": {
+      "type": "string",
+      "minLength": 3
+    },
+    "runId": {
+      "type": "string",
+      "minLength": 3
+    },
+    "frozenAt": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$",
+      "$comment": "ISO-8601 UTC timestamp."
+    },
+    "hashAlgorithm": {
+      "enum": ["sha256"]
+    },
+    "inventory": {
+      "$comment": "Each entry is exactly [posixPath, fileDigest]. Paths are participant-relative POSIX (no backslash, no colon, no ASCII control character U+0000-001F or DEL, relative, no absolute or nested form, no . or .. segments, no . or .. dot presentation in any segment, no trailing or empty segments) and sorted ascending with no duplicates; the runtime refuses everything else, and the same path contract is enforced by packages/core/identity.mjs hashEntries and by packages/core/manifest.mjs posixPathIssues (one exact path definition across identity, manifest/runtime and this schema).",
+      "type": "array",
+      "items": {
+        "type": "array",
+        "minItems": 2,
+        "maxItems": 2,
+        "prefixItems": [
+          { "type": "string", "pattern": "^(?:(?!\\.{1,2}(?:$|/))[^/\\\\:\\u0000-\\u001F\\u007F]+)(?:/(?:(?!\\.{1,2}(?:$|/))[^/\\\\:\\u0000-\\u001F\\u007F]+))*$" },
+          { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        ],
+        "items": false
+      }
+    },
+    "treeDigest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "byteCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "fileCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "freezeProcedure": {
+      "type": "string",
+      "minLength": 3
+    },
+    "notes": {
+      "type": ["string", "null"],
+      "minLength": 1
+    }
+  }
+}

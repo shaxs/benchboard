@@ -1,0 +1,23 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+import {fileURLToPath} from 'node:url';
+import {spawnSync} from 'node:child_process';
+test('S6 compatibility export declarations are paired and genuinely exclude private source payloads',t=>{
+  const mod=fileURLToPath(new URL('../../packages/results/compatibility-export-contract.mjs',import.meta.url)).replaceAll('\\','/');
+  assert.deepEqual(fs.readFileSync(new URL('../../packages/results/compatibility-export-contract.d.mts',import.meta.url)),fs.readFileSync(new URL('../../packages/results/compatibility-export-contract.d.ts',import.meta.url)));
+  const root=fs.mkdtempSync(path.join(os.tmpdir(),'bb-compatibility-export-types-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+  const file=path.join(root,'consumer.mts'),compiler=fileURLToPath(new URL('../../starter/node_modules/typescript/bin/tsc',import.meta.url));
+  const run=()=>spawnSync(process.execPath,[compiler,'--noEmit','--strict','--module','NodeNext','--moduleResolution','NodeNext','--target','ES2022',file],{encoding:'utf8',timeout:30000,windowsHide:true});
+  fs.writeFileSync(file,`import {createCompatibilityExport,validateCompatibilityExport,CompatibilityExportError} from ${JSON.stringify(mod)};
+import type {CompatibilityExport} from ${JSON.stringify(mod)};
+const p:CompatibilityExport=createCompatibilityExport({});const q:CompatibilityExport=validateCompatibilityExport(p);
+const formal:false=p.formalComparisonAvailable;const promoted:false=p.classification.promotionAllowed;
+const family:'REPORT'|'C1_RESULT'|'LEGACY'=p.family;const quality:number|null=p.report?.quality?.quality??null;
+const code:'COMPATIBILITY_EXPORT_INTEGRITY'=new CompatibilityExportError().code;void [q,formal,promoted,family,quality,code];`);
+  const valid=run();assert.equal(valid.status,0,valid.stdout+valid.stderr);
+  fs.appendFileSync(file,'\np.sourceRecord;\np.rawLogs;\n');const invalid=run();assert.equal(invalid.status,2,invalid.stdout+invalid.stderr);
+  for(const property of ['sourceRecord','rawLogs'])assert.match(invalid.stdout+invalid.stderr,new RegExp("TS2339: Property '"+property+"' does not exist"));
+});

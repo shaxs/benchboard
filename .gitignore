@@ -1,0 +1,21 @@
+node_modules
+dist/
+artifacts/
+.local/
+*.log
+
+# local-first workflow layer (never published)
+.ai/
+workflow/
+AGENTS.md
+CLAUDE.md
+.agent-teams/
+tests/**/.tmp/
+ops/.env
+_backups/
+.opencode/
+
+# code-intelligence indexes (local, rebuilt per machine)
+.gitnexus/
+.code-review-graph/
+.claude/

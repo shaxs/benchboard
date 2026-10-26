@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://benchboard.local.neutral/schemas/evidence-bundle.schema.json",
+  "title": "EvidenceBundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "kind", "evaluationId", "executionStatus", "identities", "properties", "visible", "build", "typecheck", "usefulTests", "noSuppression", "hygiene", "environment", "artifactDigests", "snapshot", "score"],
+  "properties": {
+    "schemaVersion": {"type": "string", "pattern": "^1\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"},
+    "kind": {"const": "EvidenceBundle"},
+    "evaluationId": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$"},
+    "executionStatus": {"const": "success", "$comment": "Incomplete or infrastructure execution has no EvidenceBundle or partial score."},
+    "identities": {
+      "type": "object", "additionalProperties": false,
+      "required": ["challenge", "tooling", "submission", "evaluator"],
+      "properties": {
+        "challenge": {"$ref": "#/$defs/identityRef"},
+        "tooling": {"$ref": "#/$defs/identityRef"},
+        "submission": {
+          "type": "object", "additionalProperties": false,
+          "required": ["runId", "snapshotId", "frozenSubmissionId", "manifestDigest", "treeDigest"],
+          "properties": {
+            "runId": {"type": "string", "minLength": 3},
+            "snapshotId": {"type": "string", "minLength": 3},
+            "frozenSubmissionId": {"type": "string", "minLength": 3},
+            "manifestDigest": {"$ref": "#/$defs/digest"},
+            "treeDigest": {"$ref": "#/$defs/digest"}
+          }
+        },
+        "evaluator": {
+          "type": "object", "additionalProperties": false,
+          "required": ["binding", "evaluatorVersion", "scoringVersion", "hashAlgorithm", "semanticManifest", "semanticDigest", "packageManifest", "packageDigest", "originalCandidate"],
+          "properties": {
+            "binding": {"$ref": "#/$defs/identityRef"},
+            "evaluatorVersion": {"type": "string", "minLength": 3},
+            "scoringVersion": {"type": "string", "minLength": 3},
+            "hashAlgorithm": {"const": "benchboard-sha256-tree-v1"},
+            "semanticManifest": {"$ref": "#/$defs/manifest"},
+            "semanticDigest": {"$ref": "#/$defs/digest"},
+            "packageManifest": {"$ref": "#/$defs/manifest"},
+            "packageDigest": {"$ref": "#/$defs/digest"},
+            "originalCandidate": {
+              "type": "object", "additionalProperties": false, "required": ["evaluator", "scoring"],
+              "properties": {"evaluator": {"$ref": "#/$defs/digest"}, "scoring": {"$ref": "#/$defs/digest"}}
+            }
+          }
+        }
+      }
+    },
+    "properties": {"type": "array", "minItems": 25, "maxItems": 25, "items": {"$ref": "#/$defs/property"}},
+    "visible": {
+      "type": "object", "additionalProperties": false, "required": ["passed", "total"],
+      "properties": {"passed": {"type": "integer", "minimum": 0, "maximum": 17}, "total": {"const": 17}}
+    },
+    "build": {"type": "boolean"}, "typecheck": {"type": "boolean"}, "noSuppression": {"type": "boolean"},
+    "usefulTests": {"$ref": "#/$defs/useful"},
+    "hygiene": {"$ref": "#/$defs/hygiene"},
+    "environment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["label", "nodeVersion", "platform", "architecture", "browserVersion"],
+      "properties": {
+        "label": {"type": ["string", "null"], "pattern": "^[\\w .-]{1,100}$"},
+        "nodeVersion": {"type": "string", "maxLength": 100},
+        "platform": {"type": "string", "maxLength": 100},
+        "architecture": {"type": "string", "maxLength": 100},
+        "browserVersion": {"type": ["string", "null"], "maxLength": 100}
+      }
+    },
+    "artifactDigests": {"type": "array", "items": {"$ref": "#/$defs/file"}},
+    "snapshot": {
+      "type": "object", "additionalProperties": false, "required": ["before", "after", "workspaceMatchesFrozen"],
+      "properties": {"before": {"$ref": "#/$defs/digest"}, "after": {"$ref": "#/$defs/digest"}, "workspaceMatchesFrozen": {"type": ["boolean", "null"]}}
+    },
+    "score": {
+      "type": "object", "additionalProperties": false,
+      "required": ["automated", "automatedMaximum", "areas", "humanUI", "humanMaximum", "quality", "qualityMaximum", "status"],
+      "properties": {
+        "automated": {"type": "number", "minimum": 0, "maximum": 80}, "automatedMaximum": {"const": 80},
+        "areas": {
+          "type": "object", "additionalProperties": false,
+          "required": ["visible", "functional", "persistence", "edge", "integration", "code", "usefulTests", "hygiene"],
+          "properties": {
+            "visible": {"type": "number", "minimum": 0, "maximum": 7}, "functional": {"type": "number", "minimum": 0, "maximum": 30},
+            "persistence": {"type": "number", "minimum": 0, "maximum": 10}, "edge": {"type": "number", "minimum": 0, "maximum": 5},
+            "integration": {"type": "number", "minimum": 0, "maximum": 15}, "code": {"type": "number", "minimum": 0, "maximum": 5},
+            "usefulTests": {"type": "number", "minimum": 0, "maximum": 5}, "hygiene": {"type": "number", "minimum": 0, "maximum": 3}
+          }
+        },
+        "humanUI": {"type": "null"}, "humanMaximum": {"const": 20}, "quality": {"type": "null"}, "qualityMaximum": {"const": 100},
+        "status": {"const": "HUMAN_REVIEW_PENDING"}
+      }
+    }
+  },
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "relativePath": {"type": "string", "minLength": 1, "maxLength": 2048, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*//)(?!.*[\\\\:\\u0000-\\u001f\\u007f])(?!.*[. ](?:/|$))[^/].*[^/]$|^[A-Za-z0-9_-]$"},
+    "file": {
+      "type": "object", "additionalProperties": false, "required": ["path", "bytes", "sha256"],
+      "properties": {"path": {"$ref": "#/$defs/relativePath"}, "bytes": {"type": "integer", "minimum": 0}, "sha256": {"$ref": "#/$defs/digest"}}
+    },
+    "manifest": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/file"}},
+    "identityRef": {
+      "type": "object", "additionalProperties": false, "required": ["id", "digest"],
+      "properties": {"id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$"}, "digest": {"$ref": "#/$defs/digest"}}
+    },
+    "property": {
+      "type": "object", "additionalProperties": false, "required": ["id", "area", "passed"],
+      "properties": {"id": {"type": "string", "pattern": "^(F(?:0[1-9]|1[0-3])|[PEI]0[1-4])$"}, "area": {"enum": ["functional", "persistence", "edge", "integration"]}, "passed": {"type": "boolean"}}
+    },
+    "useful": {
+      "type": "object", "additionalProperties": false, "required": ["baselinePassed", "addedCount", "killedMutations"],
+      "properties": {
+        "baselinePassed": {"type": "boolean"}, "addedCount": {"type": "integer", "minimum": 0},
+        "killedMutations": {"type": "array", "uniqueItems": true, "items": {"enum": ["storage-drop", "input-drop", "focus-drop", "label-case", "date-order"]}}
+      }
+    },
+    "hygiene": {
+      "type": "object", "additionalProperties": false, "required": ["visibleIntact", "lockedDependencies", "noSecrets", "noDebugLogging", "noNetwork"],
+      "properties": {"visibleIntact": {"type": "boolean"}, "lockedDependencies": {"type": "boolean"}, "noSecrets": {"type": "boolean"}, "noDebugLogging": {"type": "boolean"}, "noNetwork": {"type": "boolean"}}
+    }
+  }
+}

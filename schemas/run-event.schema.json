@@ -1,0 +1,459 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://benchboard.local.neutral/schemas/run-event.schema.json",
+  "title": "BenchBoard run lifecycle journal event",
+  "description": "One entry of the append-only, hash-chained event stream persisted at `<runRoot>/.benchboard/lifecycle/journal/<NNNNN>.json`. The journal is the authority for what happened in a run: events are written once through the accepted storage transaction and are never rewritten, reordered, compacted or deleted by an ordinary operation. Entry `sequence` is dense from zero and the file name is that sequence zero-padded to five digits, so a missing, duplicated or foreign entry is detectable rather than silently tolerated. Entry zero carries `previousEventDigest: null`; every later entry carries the recomputed `eventDigest` of its immediate predecessor, so a removed, duplicated or reordered entry breaks the chain and is reported. `eventDigest` is a lower-case hex SHA-256 over the canonical JSON of the event with that field omitted and is recomputed from the bytes on every read.",
+  "$comment": "Operational schema introduced in C3. It is not the immutable C1 submission or run schema and shares no $id, definition or field set with either: those describe what was submitted, this describes when a lifecycle operation was journaled.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "runId",
+    "manifestId",
+    "sequence",
+    "previousEventDigest",
+    "occurredAt",
+    "journalCommitAt",
+    "hashAlgorithm",
+    "eventDigest"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "kind": {
+      "enum": [
+        "START_INTENT",
+        "START_COMMIT",
+        "STOP_RECORDED",
+        "FREEZE_INTENT",
+        "FREEZE_COMMIT"
+      ],
+      "$comment": "What the entry records. An INTENT is written before the operation it authorises and a COMMIT after it, which is what makes an interruption visible as a journaled intent without its commit. A run that never started may open its journal with FREEZE_INTENT rather than START_INTENT, so a clockless freeze needs no invented start. A start intent, a start commit and a stop are each journaled once."
+    },
+    "runId": {
+      "type": "string",
+      "minLength": 1,
+      "$comment": "The run identity this event belongs to. Every event in one journal carries the same value, and an event naming another run is foreign."
+    },
+    "manifestId": {
+      "type": "string",
+      "minLength": 1,
+      "$comment": "The manifest identity this event belongs to, revalidated against the sealed C2 record on every read."
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4095,
+      "$comment": "Zero-based position in the stream, dense and strictly increasing. The bound is the journal size limit; a journal that reaches it is reported rather than silently truncated."
+    },
+    "previousEventDigest": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "$comment": "Null for sequence zero only. For any later entry this is the eventDigest of entry sequence minus one, which is the binding that makes removal, duplication and reordering of journaled history detectable."
+    },
+    "occurredAt": {
+      "$ref": "#/$defs/instantOrNull",
+      "$comment": "The time the operation occurred as measured through the caller clock, or null when the clock honestly reported nothing. Null is never written as zero or as the epoch, and a reversed or discontinuous reading yields null here plus a retained error on the state record rather than a clamped instant."
+    },
+    "journalCommitAt": {
+      "$ref": "#/$defs/instantOrNull",
+      "$comment": "The time the entry was committed to the journal, distinct from occurredAt so a delayed commit is visible rather than folded into the measured instant."
+    },
+    "hashAlgorithm": {
+      "const": "sha256"
+    },
+    "eventDigest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "$comment": "Self digest over the canonical JSON of this entry with this field omitted, recomputed on every read. It is the value the next entry must name."
+    },
+    "declaration": {
+      "$ref": "#/$defs/declaration",
+      "$comment": "Carried on the START_INTENT entry: the operator-declared start facts as stated, bound against the accepted manifest and immutable once journaled."
+    },
+    "detail": {
+      "type": "object",
+      "description": "The bounded facts of the operation this entry records, keyed by kind. It carries the attestation of a stop, the state digest a commit binds, and the operator disposition of a reconciliation. It is bounded by the property list and carries no document body, no command output and no secret.",
+      "additionalProperties": false,
+      "properties": {
+        "operator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "agentStopped": {
+          "type": "boolean"
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "observedAt": {
+          "$ref": "#/$defs/instantOrNull"
+        },
+        "assurance": {
+          "const": "operator-attested"
+        },
+        "enforced": {
+          "const": false
+        },
+        "clockless": {
+          "type": "boolean"
+        },
+        "stateEventDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "reconciliation": {
+          "const": true
+        },
+        "completedFromIntentDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "commitDetail": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stateEventDigest"
+      ],
+      "properties": {
+        "stateEventDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "stopDetail": {
+      "type": "object",
+      "description": "The detail a stop entry must carry: the operator statement itself with the instant it was witnessed at, plus the assurance it is attested and the fact that nothing was enforced.",
+      "additionalProperties": false,
+      "required": [
+        "operator",
+        "agentStopped",
+        "statement",
+        "observedAt",
+        "assurance",
+        "enforced"
+      ],
+      "properties": {
+        "operator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "agentStopped": {
+          "const": true
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "observedAt": {
+          "$ref": "#/$defs/instantOrNull"
+        },
+        "assurance": {
+          "const": "operator-attested"
+        },
+        "enforced": {
+          "const": false
+        }
+      },
+      "$comment": "`observedAt` is nullable and mandatory: the journaled entry states the witnessed instant, and states it as null when the clock reported nothing. An entry that omitted the claim and an entry that attests no instant would otherwise be the same bytes while meaning different things."
+    },
+    "freezeIntentDetail": {
+      "type": "object",
+      "description": "The detail a freeze intent entry must carry: the same attested operator statement a stop carries with the instant it was witnessed at, which is what authorises the freeze, plus which of the two freeze routes the entry authorises. An entry that names only an operator states no witnessed fact and authorises nothing.",
+      "additionalProperties": false,
+      "required": [
+        "operator",
+        "agentStopped",
+        "statement",
+        "observedAt",
+        "assurance",
+        "enforced",
+        "clockless"
+      ],
+      "properties": {
+        "operator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "agentStopped": {
+          "const": true
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "observedAt": {
+          "$ref": "#/$defs/instantOrNull"
+        },
+        "assurance": {
+          "const": "operator-attested"
+        },
+        "enforced": {
+          "const": false
+        },
+        "clockless": {
+          "type": "boolean"
+        }
+      },
+      "$comment": "`observedAt` follows the stop entry: nullable, explicit, and part of the attested fact the freeze has to bind. `clockless` is required and boolean because it states which route the entry authorises: `true` is the route of a run frozen without ever starting while no time was observed, and `false` is the bound route over a journaled stop. An entry that omitted the route would state neither, and a route stated as false is not the same statement as an absent one, so the value is carried and not inferred. Which run state a stated route may appear on is a question about the journal, not about this entry, and the module checks it at append and at commit."
+    },
+    "instantOrNull": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "$comment": "An ISO-8601 UTC instant, or null when no time was observed."
+    },
+    "declaration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "harness",
+        "model",
+        "workerCount",
+        "executionMode",
+        "declaredCeilingMinutes"
+      ],
+      "properties": {
+        "harness": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "model": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "workerCount": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "executionMode": {
+          "const": "MANUAL"
+        },
+        "declaredCeilingMinutes": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1440
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "$comment": "The operator-declared start facts. Unknown is null: a null is neither zero nor an empty statement, and no value here is enforced by this release."
+    },
+    "reconciledStartCommitDetail": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stateEventDigest",
+        "reconciliation",
+        "operator",
+        "completedFromIntentDigest"
+      ],
+      "properties": {
+        "stateEventDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "reconciliation": {
+          "const": true
+        },
+        "operator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "completedFromIntentDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "startCommitDetail": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/commitDetail"
+        },
+        {
+          "$ref": "#/$defs/reconciledStartCommitDetail"
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "$comment": "A start intent is the entry that carries the declaration, and it is the only kind that does.",
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "START_INTENT"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "declaration": {
+            "$ref": "#/$defs/declaration"
+          }
+        },
+        "required": [
+          "declaration"
+        ]
+      }
+    },
+    {
+      "$comment": "A freeze intent is the journaled authority to freeze, so its detail must carry the attested operator statement that authorises it, with the same assurances a stop carries, and it must state which of the two routes it authorises: `clockless: true` is a run frozen without ever starting while no time was observed, `clockless: false` is the bound route over a journaled stop.",
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "FREEZE_INTENT"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "required": [
+          "detail"
+        ],
+        "properties": {
+          "detail": {
+            "$ref": "#/$defs/freezeIntentDetail"
+          }
+        }
+      }
+    },
+    {
+      "$comment": "A stop entry is the journaled form of the operator statement, so the attestation fields it carries must be present and must state that the run is not enforced.",
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "STOP_RECORDED"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "required": [
+          "detail"
+        ],
+        "properties": {
+          "detail": {
+            "$ref": "#/$defs/stopDetail"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "START_COMMIT"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "detail": {
+            "$ref": "#/$defs/startCommitDetail"
+          }
+        },
+        "required": [
+          "detail"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "FREEZE_COMMIT"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "required": [
+          "detail"
+        ],
+        "properties": {
+          "detail": {
+            "$ref": "#/$defs/commitDetail"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "START_INTENT"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "detail": false
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,239 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://benchboard.local.neutral/schemas/measurement.schema.json",
+  "title": "Measurement (neutral BenchBoard contract)",
+  "description": "One measured, entered, derived or unavailable value with an honest unit and source. measurementKind, value and source must tell one consistent story: an UNAVAILABLE measurement is exactly null for value and source (never zero, so 'not sampled' cannot masquerade as 'zero'); a measured or entered value names a local record ID/digest or a named procedure, and an entered value cannot be dressed up as computed. Source references are local records: exported private absolute paths, tokens, cookies and credentials are never carried here.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "measurementId",
+    "metric",
+    "unit",
+    "measurementKind",
+    "value",
+    "source"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "$comment": "Schema major is the discriminator; only major 1 is read and unknown majors are rejected, never coerced.",
+      "type": "string",
+      "pattern": "^1\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+    },
+    "kind": {
+      "const": "Measurement"
+    },
+    "measurementId": {
+      "type": "string",
+      "minLength": 3
+    },
+    "metric": {
+      "type": "string",
+      "$comment": "Camel-case metric identifier.",
+      "pattern": "^[a-z0-9]+(?:[A-Z0-9][a-z0-9]*)*$"
+    },
+    "unit": {
+      "enum": [
+        "s",
+        "ms",
+        "min",
+        "tokens",
+        "points",
+        "count",
+        "bytes",
+        "ratio",
+        "usd"
+      ]
+    },
+    "measurementKind": {
+      "$comment": "The record-level name of the architecture's provenance axis (measured | entered | derived | unavailable), mapped one to one.",
+      "enum": [
+        "MEASURED",
+        "ENTERED",
+        "DERIVED",
+        "UNAVAILABLE"
+      ]
+    },
+    "value": {
+      "$comment": "Exactly null for UNAVAILABLE; a finite number otherwise. null is never silently replaced by zero.",
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "source": {
+      "$comment": "Exactly null for UNAVAILABLE (an unmeasured value claims no source); otherwise names where the value came from.",
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "procedure"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "LOCAL_ID",
+            "LOCAL_DIGEST",
+            "COMPUTED",
+            "SELF_ASSESSMENT",
+            "LOCAL_PROCEDURE"
+          ]
+        },
+        "recordKind": {
+          "enum": [
+            "ToolingIdentity",
+            "ChallengeIdentity",
+            "EvaluatorIdentity",
+            "RunManifest",
+            "FrozenSubmission",
+            "Measurement",
+            "Result"
+          ]
+        },
+        "recordId": {
+          "$comment": "A local record identifier, validated against the result's own bindings by the runtime.",
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "digest": {
+          "$comment": "A local digest, validated against the digests bound by the surrounding result.",
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "procedure": {
+          "type": "string",
+          "minLength": 3,
+          "pattern": "\\S"
+        }
+      },
+      "dependentRequired": {
+        "recordId": [
+          "recordKind"
+        ],
+        "recordKind": [
+          "recordId"
+        ]
+      },
+      "allOf": [
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "LOCAL_ID"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "type": "object",
+            "required": [
+              "recordId",
+              "recordKind"
+            ],
+            "properties": {
+              "recordId": true,
+              "recordKind": true
+            }
+          }
+        },
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "LOCAL_DIGEST"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "type": "object",
+            "required": [
+              "digest"
+            ],
+            "properties": {
+              "digest": true
+            }
+          }
+        }
+      ]
+    },
+    "derivation": {
+      "$comment": "One stable representation: a DERIVED measurement's formula string, e.g. '{totalTokens} / {elapsedWallSeconds}', validated, persisted and revalidated as the same string. minLength plus this pattern enforce the exact shared grammar as a structural gate: at least one whole {metricName} token whose name matches the metric grammar, literal text without braces elsewhere, every { and } belonging to exactly one token — an empty, placeholder-free, whitespace-only or unmatched/nested-brace formula is refused identically by the runtime (packages/core/manifest.mjs derivationProblems) and its helper parseDerivation. The runtime adds only the semantic extras it discloses: repeated inputs and the measurementKind coupling (DERIVED requires, others refuse) are the runtime's job, not the pattern's.",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^{}]*\\{[a-z0-9]+(?:[A-Z0-9][a-z0-9]*)*\\}(?:[^{}]*\\{[a-z0-9]+(?:[A-Z0-9][a-z0-9]*)*\\})*[^{}]*$"
+    },
+    "confidence": {
+      "$comment": "Optional 0..1 honesty weight; absent or null stays absent, never zero.",
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "recordedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$"
+    },
+    "notes": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "measurementKind": {
+            "const": "UNAVAILABLE"
+          }
+        },
+        "required": [
+          "measurementKind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "value": {
+            "type": "null"
+          },
+          "source": {
+            "type": "null"
+          },
+          "confidence": {
+            "type": "null"
+          },
+          "derivation": false
+        }
+      },
+      "else": {
+        "properties": {
+          "value": {
+            "type": "number"
+          },
+          "source": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  ]
+}

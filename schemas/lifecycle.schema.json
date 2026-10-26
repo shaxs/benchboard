@@ -1,0 +1,265 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://benchboard.local.neutral/schemas/lifecycle.schema.json",
+  "title": "BenchBoard run lifecycle state record (operational projection)",
+  "description": "The record persisted at `<runRoot>/.benchboard/lifecycle/state.json`. It is a validated projection of the append-only event stream in `lifecycle/journal/`, not the authority: the journal decides what happened, and a record that disagrees with the journal is reported rather than repaired. Unknown is null and is never rendered as zero, an empty string or an epoch instant. No clock value here is ever invented, clamped or substituted: `startedAt`/`stoppedAt` are null when no time was observed, `elapsedMs` is null when the span cannot be measured, and a clock that was unavailable or discontinuous is retained in `clockError` with `elapsedAvailable: false`.",
+  "$comment": "Operational schema introduced in C3. It is not the immutable C1 RunManifest and shares no $id, definition or field set with it: the manifest is the write-once initialization identity, this record is the mutable lifecycle projection.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "module",
+    "runId",
+    "manifestId",
+    "manifestDigest",
+    "state",
+    "declaration",
+    "startedAt",
+    "stoppedAt",
+    "elapsedMs",
+    "stopAssurance",
+    "stopAttestation",
+    "clockError",
+    "journalCommitAt",
+    "history",
+    "hashAlgorithm",
+    "stateDigest"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0",
+      "$comment": "Version of this record shape. A reader that does not recognise it refuses the record rather than guessing at it."
+    },
+    "kind": {
+      "const": "benchboard.lifecycle.state.v1",
+      "$comment": "Envelope kind the record is registered under in accepted storage. A record of another kind at this path is foreign and is refused."
+    },
+    "module": {
+      "const": "benchboard-core-lifecycle-v1",
+      "$comment": "The module that wrote the record, recorded so a record from a different implementation is visible rather than inferred."
+    },
+    "runId": {
+      "type": "string",
+      "minLength": 1,
+      "$comment": "The run identity, bound to the accepted C2 run record. Never derived from a directory name."
+    },
+    "manifestId": {
+      "type": "string",
+      "minLength": 1,
+      "$comment": "The manifest identity this run is bound to, revalidated against the sealed C2 record on every read."
+    },
+    "manifestDigest": {
+      "oneOf": [
+        { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        { "type": "null" }
+      ],
+      "$comment": "The manifest digest read from accepted storage, or null when the bound record carries none. Never recomputed from this file."
+    },
+    "state": {
+      "enum": ["INITIALIZED", "RUNNING", "STOP_RECORDED", "FROZEN"],
+      "$comment": "The committed state. There is no stored INITIALIZED state before a first record exists: it is derived from a container that carries none. RUNNING is live until an operator attests a stop; FROZEN is terminal and is written only by the freeze task, never by a start or a stop."
+    },
+    "declaration": {
+      "oneOf": [{ "$ref": "#/$defs/declaration" }, { "type": "null" }],
+      "$comment": "The operator-declared start facts, bound against the accepted manifest, or null before a start has been journaled."
+    },
+    "startedAt": { "$ref": "#/$defs/instantOrNull" },
+    "stoppedAt": { "$ref": "#/$defs/instantOrNull" },
+    "elapsedMs": {
+      "oneOf": [
+        { "type": "integer", "minimum": 0 },
+        { "type": "null" }
+      ],
+      "$comment": "Measured wall span in whole milliseconds. Zero is a legitimate measurement of two equal readings; null means the span is not available, which is never reported as zero."
+    },
+    "stopAssurance": {
+      "oneOf": [{ "const": "operator-attested" }, { "type": "null" }],
+      "$comment": "How a recorded stop is to be read: as an operator statement, never as an enforced action. Null until a stop is recorded."
+    },
+    "stopAttestation": {
+      "oneOf": [{ "$ref": "#/$defs/attestation" }, { "type": "null" }]
+    },
+    "clockError": {
+      "oneOf": [{ "$ref": "#/$defs/clockError" }, { "type": "null" }]
+    },
+    "journalCommitAt": { "$ref": "#/$defs/instantOrNull" },
+    "history": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/historyEntry" },
+      "$comment": "Append-only operation history. Nothing is removed from it on reconcile, and an error history survives a later successful operation."
+    },
+    "hashAlgorithm": {
+      "const": "sha256"
+    },
+    "stateDigest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "$comment": "Lower-case hex SHA-256 over the canonical JSON of this record with this field omitted. It is recomputed from the bytes on every read, so a hand-edited record is detected rather than trusted."
+    }
+  },
+  "allOf": [
+    {
+      "$comment": "A record that reports a live run must carry the operator declaration that opened it. The declaration is the authority the start was journaled under, so a RUNNING record without one describes a start that nothing declared.",
+      "if": {
+        "properties": { "state": { "const": "RUNNING" } },
+        "required": ["state"]
+      },
+      "then": {
+        "properties": { "declaration": { "$ref": "#/$defs/declaration" } }
+      }
+    },
+    {
+      "$comment": "A record that reports a stopped or frozen run must carry the attested operator statement that authorises that claim. The attestation is the whole authority a stop has, so a record asserting a stop without one states a fact nothing witnessed. The assurance field is not demanded here: it is set by the stop operation itself and by an explicit restatement, so the clockless freeze route and a staged stop carry the attestation with the assurance still null, which is honest rather than missing.",
+      "if": {
+        "properties": { "state": { "enum": ["STOP_RECORDED", "FROZEN"] } },
+        "required": ["state"]
+      },
+      "then": {
+        "properties": { "stopAttestation": { "$ref": "#/$defs/attestation" } }
+      }
+    }
+  ],
+  "$defs": {
+    "instantOrNull": {
+      "oneOf": [
+        { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$" },
+        { "type": "null" }
+      ],
+      "$comment": "An ISO-8601 UTC instant, or null when the clock honestly reported nothing. Null is not the epoch and is not zero."
+    },
+    "declaration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["harness", "model", "workerCount", "executionMode", "declaredCeilingMinutes"],
+      "properties": {
+        "harness": {
+          "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }],
+          "$comment": "The harness named at start, or null when it was not known. When the accepted manifest names one, a different value is refused."
+        },
+        "model": {
+          "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }],
+          "$comment": "The model named at start, or null. The model is an attribute recorded about a run, never a secret and never a capability. Where the accepted manifest names a model it must be repeated exactly, and where the manifest names none the operator statement binds."
+        },
+        "workerCount": {
+          "oneOf": [
+            { "type": "integer", "minimum": 1 },
+            { "type": "null" }
+          ],
+          "$comment": "The declared worker count, or null. A count is a declared fact about the run; it is not a limit this release enforces."
+        },
+        "executionMode": {
+          "const": "MANUAL",
+          "$comment": "The only execution mode this release records."
+        },
+        "declaredCeilingMinutes": {
+          "oneOf": [
+            { "type": "integer", "minimum": 1, "maximum": 1440 },
+            { "type": "null" }
+          ],
+          "$comment": "The declared ceiling in whole minutes, or null. It is a declared statement bounded by the challenge ceiling, and nothing in this release enforces it."
+        }
+      }
+    },
+    "attestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operator", "agentStopped", "statement"],
+      "properties": {
+        "operator": {
+          "type": "string",
+          "minLength": 1,
+          "$comment": "Who states that the agent stopped. Recorded for accountability; it is not authenticated by this release."
+        },
+        "agentStopped": {
+          "const": true,
+          "$comment": "The attested claim itself. It is required and may only be true: there is no way to attest that an agent is still running through this field, and recording it is not an action upon any process."
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1,
+          "$comment": "What the operator observed, in the operator's own words."
+        },
+        "observedAt": {
+          "$ref": "#/$defs/instantOrNull",
+          "$comment": "The time the operator reports, when the operator reports one. It is carried, never substituted for a measured value."
+        },
+        "clockless": {
+          "const": true,
+          "$comment": "Present only on the attestation that authorises a clockless freeze from INITIALIZED: an explicit statement that no clock value is available and none is being withheld."
+        }
+      }
+    },
+    "clockError": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "error", "elapsedAvailable"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1,
+          "$comment": "The stable code of the clock refusal, such as CLOCK_INVALID."
+        },
+        "error": {
+          "type": "string",
+          "minLength": 1,
+          "$comment": "The retained description of what the clock did: unavailable, reversed or discontinuous."
+        },
+        "elapsedAvailable": {
+          "const": false,
+          "$comment": "Stated explicitly so a consumer cannot mistake an absent elapsed for a measured zero."
+        }
+      }
+    },
+    "historyEntry": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["at", "operation"],
+      "properties": {
+        "at": {
+          "type": "string",
+          "minLength": 1,
+          "$comment": "When the operation was recorded. An audit stamp, so it is a non-null string here while the measured instants above may be null."
+        },
+        "operation": {
+          "enum": ["START", "STOP", "RECONCILE", "FREEZE"],
+          "$comment": "Which operation appended the entry. The domain is the set of operations this contract is able to record: an entry naming an operation the module does not implement would read as history of something that never ran."
+        },
+        "intentEventDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "$comment": "The journal event that recorded the intent this operation completed."
+        },
+        "completedFromIntentDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "$comment": "The journaled intent an explicit reconciliation completed from, so the repair is traceable to the interruption it repaired."
+        },
+        "stopEventDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "elapsedAvailable": {
+          "type": "boolean"
+        },
+        "interruptedOperation": {
+          "type": "string",
+          "minLength": 1,
+          "$comment": "Named by an operator on reconcile; never inferred from the record by the module."
+        },
+        "decision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operatorAttestation": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "name": "@benchboard/synthetic-tooling",
+  "version": "0.0.0-synthetic",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "benchboard": "./cli/benchboard.mjs"
+  },
+  "engines": {
+    "node": "24.13.1",
+    "npm": "11.8.0"
+  },
+  "dependencies": {
+    "@playwright/test": "1.51.1",
+    "ajv": "8.17.1"
+  },
+  "files": [
+    "cli/",
+    "packages/core/",
+    "packages/evaluation/",
+    "packages/results/",
+    "schemas/",
+    "adapters/manual/",
+    "starter/",
+    "fixtures/",
+    "evaluator/score.mjs",
+    "evaluator/hidden-tests/properties.mjs",
+    "evaluator/browser.mjs",
+    "evaluator/useful-tests.mjs",
+    "evaluator/collect-evidence.mjs",
+    "evaluator/local-server.mjs",
+    "runner/files.mjs",
+    "release/inventory.json",
+    "version.json"
+  ]
+}

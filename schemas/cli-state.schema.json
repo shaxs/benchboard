@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://benchboard.local.neutral/schemas/cli-state.schema.json",
+  "oneOf": [
+    { "$ref": "#/$defs/context" },
+    { "$ref": "#/$defs/attempt" },
+    { "$ref": "#/$defs/terminal" },
+    { "$ref": "#/$defs/execution" }
+  ],
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9._:-]{2,127}$" },
+    "fileId": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9._-]{2,127}$" },
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "root": { "type": "string", "minLength": 2, "maxLength": 4096 },
+    "context": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "schemaVersion", "contextId", "runId", "manifestId", "manifestDigest", "runRoot", "resultsRoot", "attemptsRoot", "storeRoot"],
+      "properties": {
+        "kind": { "const": "benchboard.cli.results.v1" }, "schemaVersion": { "const": "1.0.0" },
+        "contextId": { "$ref": "#/$defs/id" }, "runId": { "$ref": "#/$defs/id" },
+        "manifestId": { "$ref": "#/$defs/id" }, "manifestDigest": { "$ref": "#/$defs/digest" },
+        "runRoot": { "$ref": "#/$defs/root" }, "resultsRoot": { "$ref": "#/$defs/root" },
+        "attemptsRoot": { "$ref": "#/$defs/root" }, "storeRoot": { "$ref": "#/$defs/root" }
+      }
+    },
+    "attempt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "schemaVersion", "attemptId", "contextId", "runId", "manifestId", "manifestDigest", "snapshotId", "frozenSubmissionId", "outputRoot"],
+      "properties": {
+        "kind": { "const": "benchboard.cli.attempt.v1" }, "schemaVersion": { "const": "1.0.0" },
+        "attemptId": { "$ref": "#/$defs/id" }, "contextId": { "$ref": "#/$defs/id" },
+        "runId": { "$ref": "#/$defs/id" }, "manifestId": { "$ref": "#/$defs/id" },
+        "manifestDigest": { "$ref": "#/$defs/digest" }, "snapshotId": { "$ref": "#/$defs/id" },
+        "frozenSubmissionId": { "$ref": "#/$defs/id" }, "outputRoot": { "$ref": "#/$defs/root" }
+      }
+    },
+    "execution": {
+      "type": "object", "additionalProperties": false,
+      "allOf": [{ "if": { "properties": { "evaluatorExecution": { "const": "SUCCESS" } } }, "then": { "properties": { "reportId": { "$ref": "#/$defs/fileId" } } } }],
+      "required": ["kind", "schemaVersion", "attemptId", "contextId", "runId", "manifestId", "manifestDigest", "snapshotId", "frozenSubmissionId", "outputRoot", "evaluationId", "reportId", "evaluatorExecution"],
+      "properties": {
+        "kind": { "const": "benchboard.cli.execution.v1" }, "schemaVersion": { "const": "1.0.0" },
+        "attemptId": { "$ref": "#/$defs/id" }, "contextId": { "$ref": "#/$defs/id" },
+        "runId": { "$ref": "#/$defs/id" }, "manifestId": { "$ref": "#/$defs/id" },
+        "manifestDigest": { "$ref": "#/$defs/digest" }, "snapshotId": { "$ref": "#/$defs/id" },
+        "frozenSubmissionId": { "$ref": "#/$defs/id" }, "outputRoot": { "$ref": "#/$defs/root" },
+        "evaluationId": { "$ref": "#/$defs/fileId" },
+        "reportId": { "anyOf": [{ "$ref": "#/$defs/fileId" }, { "type": "null" }] },
+        "evaluatorExecution": { "enum": ["SUCCESS", "INFRASTRUCTURE_ERROR"] }
+      }
+    },
+    "terminal": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "schemaVersion", "attemptId", "contextId", "runId", "manifestId", "manifestDigest", "status", "evaluationId", "reportId", "reportDigest"],
+      "properties": {
+        "kind": { "const": "benchboard.cli.attempt-terminal.v1" }, "schemaVersion": { "const": "1.0.0" },
+        "attemptId": { "$ref": "#/$defs/id" }, "contextId": { "$ref": "#/$defs/id" },
+        "runId": { "$ref": "#/$defs/id" }, "manifestId": { "$ref": "#/$defs/id" },
+        "manifestDigest": { "$ref": "#/$defs/digest" },
+        "status": { "enum": ["SUCCEEDED", "INFRASTRUCTURE", "REFUSED", "CANCELLED"] },
+        "evaluationId": { "anyOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] },
+        "reportId": { "anyOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] },
+        "reportDigest": { "anyOf": [{ "$ref": "#/$defs/digest" }, { "type": "null" }] }
+      }
+    }
+  }
+}

@@ -1,0 +1,178 @@
+{
+  "comment": "Pinned golden vectors for packages/core/identity.mjs. Expected values were produced by the preserved runner/files.mjs tree()/sha() implementation (the frozen compatibility oracle) and by the literal SHA-256 algorithm; never by the C1 implementation under test. Fixture bytes are base64.",
+  "hashAlgorithmId": "benchboard-sha256-tree-v1",
+  "sha256": {
+    "empty": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "ascii": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+    "crlf": "8e4621379786ef42a4fec155cd525c291dd7db3c1fde3478522f4f61c03fd1bd",
+    "nulByte": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
+    "unicode": "5c981717c176785c19dfac2438d7a8769ef0fc51492b258a7b2391e0dc7f7aac"
+  },
+  "hashEntries": {
+    "empty": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "pairs": {
+      "inputs": [
+        {
+          "path": "b/b.txt",
+          "bytes": 4,
+          "sha256": "679e273f78fc8f8ba114db23c2dce80cc77c91083939825ca830152f2f080d08"
+        },
+        {
+          "path": "a/a.txt",
+          "sha256": "87428fc522803d31065e7bce3cf03fe475096631e5e07bbd7a0fde60c4cf25c7"
+        }
+      ],
+      "expected": "9130db96ff94d139cd77f4825614fe384252d464493ab9a43a7fdb89c263c735"
+    },
+    "rawByteDigests": {
+      "alpha": "87428fc522803d31065e7bce3cf03fe475096631e5e07bbd7a0fde60c4cf25c7",
+      "beta": "679e273f78fc8f8ba114db23c2dce80cc77c91083939825ca830152f2f080d08"
+    }
+  },
+  "fixtures": {
+    "basic": {
+      "files": {
+        "b.txt": "bGluZTENCmxpbmUyCg==",
+        "a.txt": "YQo=",
+        "nested/z.txt": "ego=",
+        "nested/a.txt": "YQ0K",
+        "Ünïcode/Ω.txt": "zqkK"
+      },
+      "expectedDigest": "805be2f8b3a47711223977cd9ce93f408993aebbb1e73bd820e85782d028e148",
+      "expectedEntries": [
+        {
+          "path": "a.txt",
+          "sha256": "87428fc522803d31065e7bce3cf03fe475096631e5e07bbd7a0fde60c4cf25c7"
+        },
+        {
+          "path": "b.txt",
+          "sha256": "6825eec65a7385d7b1e713ccc3ff37df54f90b38aed6edca93bddb734fad0b42"
+        },
+        {
+          "path": "nested/a.txt",
+          "sha256": "8e4621379786ef42a4fec155cd525c291dd7db3c1fde3478522f4f61c03fd1bd"
+        },
+        {
+          "path": "nested/z.txt",
+          "sha256": "c865f6c5ab8d1b0bcd383a5e1e3879d22681c96bf462c269b7581d523fbe70ab"
+        },
+        {
+          "path": "Ünïcode/Ω.txt",
+          "sha256": "5c981717c176785c19dfac2438d7a8769ef0fc51492b258a7b2391e0dc7f7aac"
+        }
+      ]
+    },
+    "binary": {
+      "files": {
+        "blob.bin": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/wABAgMEBQYHCAkKCwwNDg8QERITFBUWFxgZGhscHR4fICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj9AQUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVpbXF1eX2BhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ent8fX5/gIGCg4SFhoeIiYqLjI2Oj5CRkpOUlZaXmJmam5ydnp+goaKjpKWmp6ipqqusra6vsLGys7S1tre4ubq7vL2+v8DBwsPExcbHyMnKy8zNzs/Q0dLT1NXW19jZ2tvc3d7f4OHi4+Tl5ufo6err7O3u7/Dx8vP09fb3+Pn6+/z9/v8AAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyAhIiMkJSYnKCkqKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/",
+        "nul.txt": "AAH/Cg=="
+      },
+      "expectedDigest": "e085e54c0bc621024cae9ceea229d1b80ce38a5497655ce617cb54d7612cf3b6",
+      "expectedEntries": [
+        {
+          "path": "blob.bin",
+          "sha256": "f3a25aa93aa2fbba28d79260535bbd6a5eb0fc1c24a8b0f04e12b484c1dfe363"
+        },
+        {
+          "path": "nul.txt",
+          "sha256": "a95803d91f2a2eb57d42e2a799bb0d42e2acc37c22aa9d433a4173e5db794f28"
+        }
+      ]
+    },
+    "crlf": {
+      "files": {
+        "crlf.txt": "YQ0KYg0K",
+        "lf.txt": "YQpiCg==",
+        "mixed.txt": "YQ0KYgoNCg=="
+      },
+      "expectedDigest": "286d2dad4883f129e4d31f72f383da61ccbb699235bea5e53b27bbc895264f5b",
+      "expectedEntries": [
+        {
+          "path": "crlf.txt",
+          "sha256": "58055bdcc73787eb88c78d36f0b4939e9c5dc1c3ad17e25cc85a6833cf1a0cab"
+        },
+        {
+          "path": "lf.txt",
+          "sha256": "911169ddaaf146aff539f58c26c489af3b892dff0fe283c1c264c65ae5aa59a2"
+        },
+        {
+          "path": "mixed.txt",
+          "sha256": "f76e3041af8f96506a9f8a9bd57876fa445bf9978d21693da69a3b6c9e977f12"
+        }
+      ]
+    },
+    "ordering": {
+      "files": {
+        "Z.txt": "Wgo=",
+        "a.txt": "YQo=",
+        "0digit.txt": "MAo=",
+        "_under.txt": "Xwo=",
+        "~tilde.txt": "fgo=",
+        "Ω.txt": "zqkK",
+        "Assets/x.txt": "QQo=",
+        "vendor/n.txt": "dgo="
+      },
+      "expectedDigest": "8269d5b63e4066182e77a7854180adae0459b2124367cef767d285f0ef72577c",
+      "expectedEntries": [
+        {
+          "path": "0digit.txt",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        {
+          "path": "Assets/x.txt",
+          "sha256": "06f961b802bc46ee168555f066d28f4f0e9afdf3f88174c1ee6f9de004fc30a0"
+        },
+        {
+          "path": "Z.txt",
+          "sha256": "ec39b67830c0c34d71b0b6bf1d1c424eb7caab9222eb401fdaef044cf2145e9b"
+        },
+        {
+          "path": "_under.txt",
+          "sha256": "4415b7e361fc6f6ba2492adef1f27cfb00d0105e4588177470cecc4214b35284"
+        },
+        {
+          "path": "a.txt",
+          "sha256": "87428fc522803d31065e7bce3cf03fe475096631e5e07bbd7a0fde60c4cf25c7"
+        },
+        {
+          "path": "vendor/n.txt",
+          "sha256": "73324e1ab1db72ee9eb4fdf1c90a586d67e00ab58330d1cbfea26ecd0a77fa4d"
+        },
+        {
+          "path": "~tilde.txt",
+          "sha256": "73cafed4c2cba0743097670a0615e4958fd6ddae0ea12b077bffcc3581e9afd2"
+        },
+        {
+          "path": "Ω.txt",
+          "sha256": "5c981717c176785c19dfac2438d7a8769ef0fc51492b258a7b2391e0dc7f7aac"
+        }
+      ]
+    },
+    "skipnames": {
+      "files": {
+        "node_modules/pkg/index.js": "bQo=",
+        "dist/bundle.js": "ZAo=",
+        ".git/config": "Zwo=",
+        "src/keep.txt": "awo="
+      },
+      "expectedDigest": "84fa4ca772a5087127573a0b0d5e8aa1a2d9a57ebbacee72dbd922395a9fabd6",
+      "expectedEntries": [
+        {
+          "path": "src/keep.txt",
+          "sha256": "19732980d68fbd00358a0a4d98246c960400b87e4fa2a2e155db98be2b42ed6c"
+        }
+      ],
+      "expectedDigestWithoutSkipping": "6b047801c9f47b566b73d1953c665fdb3b91e87d8feb2514d94736862b73ac41",
+      "unskippedFileCount": 4
+    },
+    "empty": {
+      "files": {},
+      "expectedDigest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "expectedEntries": []
+    }
+  },
+  "starter26": {
+    "fileCount": 26,
+    "digest": "aead38d3607492066247dddc7cbfb9828860f008f6151d434210394c736cb1f8"
+  }
+}

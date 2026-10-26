@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://benchboard.local.neutral/schemas/release-notices.schema.json",
+  "title": "Declaration-only notice inventory",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "kind", "profile", "projectLicense", "releaseApproved", "assets", "dependencies", "dependencyCoverage"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "kind": { "const": "NoticeInventory" },
+    "profile": { "enum": ["participant", "synthetic"] },
+    "projectLicense": {
+      "type": "object", "additionalProperties": false,
+      "required": ["selected", "approved"],
+      "properties": { "selected": { "type": "null" }, "approved": { "const": false } }
+    },
+    "releaseApproved": { "const": false },
+    "assets": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/asset" } },
+    "dependencies": { "type": "array", "items": { "$ref": "#/$defs/dependency" } },
+    "dependencyCoverage": {
+      "type": "array", "minItems": 1, "maxItems": 2,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["scope", "evidence"],
+        "properties": { "scope": { "enum": ["owner", "participant"] }, "evidence": { "const": "lockfile-v3-declaration" } }
+      }
+    }
+  },
+  "$defs": {
+    "asset": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "ownership", "license", "compatibility", "evidence"],
+      "properties": {
+        "path": { "type": "string" },
+        "bytes": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "ownership": { "type": "null" }, "license": { "type": "null" }, "compatibility": { "type": "null" },
+        "evidence": { "const": "release-profile-declaration" }
+      }
+    },
+    "dependency": {
+      "type": "object", "additionalProperties": false,
+      "required": ["scope", "location", "name", "version", "license", "licenseSource", "ownership", "compatibility"],
+      "properties": {
+        "scope": { "enum": ["owner", "participant"] },
+        "location": { "type": "string" }, "name": { "type": "string" },
+        "version": { "type": ["string", "null"] },
+        "license": { "enum": [null, "MIT", "MIT-0", "ISC", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "CC-BY-4.0", "(MIT OR Apache-2.0)"] },
+        "licenseSource": { "enum": ["lockfile-declaration", "unavailable"] },
+        "ownership": { "type": "null" }, "compatibility": { "type": "null" }
+      }
+    }
+  }
+}

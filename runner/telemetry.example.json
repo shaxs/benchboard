@@ -1,0 +1,121 @@
+{
+  "schemaVersion": "1.1",
+  "run": {
+    "runId": "synthetic-example",
+    "benchmarkVersion": "1.0.0-candidate.4",
+    "architectureId": "SYNTHETIC_NOT_A_CALIBRATION",
+    "startedAt": "2026-10-05T20:00:00Z",
+    "completedAt": "2026-10-05T20:10:00Z",
+    "status": "COMPLETED",
+    "sessionPolicy": "example-fresh",
+    "configuration": {
+      "synthetic": true
+    },
+    "deadlineAt": "2026-10-05T21:15:00Z",
+    "observationEndedAt": "2026-10-05T20:10:00Z",
+    "stopResult": "COMPLETED"
+  },
+  "provenance": {
+    "source": "synthetic documentation example",
+    "exportedAt": "2026-10-05T20:10:00Z",
+    "sourceHash": null
+  },
+  "captain": {
+    "model": "Example Captain",
+    "location": "local",
+    "tokens": {
+      "inputTokens": 1000,
+      "cacheReadTokens": 200,
+      "outputTokens": 250,
+      "modelSteps": 2,
+      "compactions": 0,
+      "toolCalls": 3
+    },
+    "modelWallSeconds": 30,
+    "humanInterventions": 0
+  },
+  "workers": [
+    {
+      "logicalMember": "worker-1",
+      "model": "Example Worker",
+      "location": "local",
+      "availableStartedAt": "2026-10-05T20:00:00Z",
+      "availableCompletedAt": "2026-10-05T20:10:00Z",
+      "intervals": [
+        {
+          "startedAt": "2026-10-05T20:00:00Z",
+          "completedAt": "2026-10-05T20:08:00Z",
+          "kind": "busy"
+        }
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "taskId": "task-1",
+      "dependencies": [],
+      "taskType": "example"
+    }
+  ],
+  "attempts": [
+    {
+      "logicalMember": "worker-1",
+      "model": "Example Worker",
+      "location": "local",
+      "taskId": "task-1",
+      "attemptId": "attempt-1",
+      "dispatchClass": "example-independent",
+      "sessionId": "session-1",
+      "sessionGeneration": 1,
+      "startedAt": "2026-10-05T20:00:00Z",
+      "completedAt": "2026-10-05T20:08:00Z",
+      "firstMeaningfulArtifactAt": "2026-10-05T20:01:00Z",
+      "firstPassingTestAt": "2026-10-05T20:02:00Z",
+      "status": "COMPLETED",
+      "tokens": {
+        "inputTokens": 1000,
+        "cacheReadTokens": 200,
+        "outputTokens": 250,
+        "modelSteps": 2,
+        "compactions": 0,
+        "toolCalls": 3
+      },
+      "decodeTokensPerSecond": null,
+      "ttftMs": null,
+      "modelWallSeconds": 60,
+      "startingContextTokens": null,
+      "endingContextTokens": null,
+      "cacheGrowthTokens": null,
+      "focusedTestsPassed": 1,
+      "focusedTestsTotal": 1,
+      "reworkSeconds": 0,
+      "falseCompletion": false,
+      "stalls": 0,
+      "captainWakeups": 0,
+      "invalidToolCalls": 0,
+      "scopeExpansions": 0,
+      "integrationDefects": 0,
+      "humanInterventions": 0
+    }
+  ],
+  "gpuReservations": [
+    {
+      "gpuId": "GPU-0",
+      "startedAt": "2026-10-05T20:00:00Z",
+      "completedAt": "2026-10-05T20:10:00Z",
+      "location": "local"
+    }
+  ],
+  "orchestration": {
+    "captainTakeovers": 0,
+    "humanInterventions": 0,
+    "reassignments": 0,
+    "independentRotations": 0,
+    "reviewFindings": 0,
+    "sotaFindings": 0
+  },
+  "cloud": {
+    "costUsd": null,
+    "provider": null
+  }
+}

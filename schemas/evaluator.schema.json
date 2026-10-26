@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://benchboard.local.neutral/schemas/evaluator.schema.json",
+  "title": "EvaluatorIdentity (neutral BenchBoard contract)",
+  "description": "Neutral evaluator identity: declared evaluator/scoring semantic version, exposure/transparency about its own visibility, semantic input digests and the architecture binding. The declared score split is carried as numbers only; the scoring arithmetic and the 80 automated + 20 human UI rubric stay the executable evaluator's authority. A visibility claim must be honest: an open-source evaluator cannot claim secrecy from its local user.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "evaluatorId",
+    "evaluatorVersion",
+    "exposure",
+    "transparency",
+    "architectureId",
+    "architectureKind",
+    "hashAlgorithm",
+    "definitionDigest",
+    "digestProvenance",
+    "scoringDigest",
+    "visibleTestsDigest",
+    "hiddenTestsDigest"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "$comment": "Schema major is the discriminator; only major 1 is read and unknown majors are rejected, never coerced.",
+      "type": "string",
+      "pattern": "^1\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+    },
+    "kind": {
+      "const": "EvaluatorIdentity"
+    },
+    "evaluatorId": {
+      "type": "string",
+      "minLength": 3
+    },
+    "evaluatorVersion": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+    },
+    "exposure": {
+      "enum": ["PUBLIC", "OWNER_LOCAL", "PRIVATE"]
+    },
+    "transparency": {
+      "enum": ["OPEN_SOURCE", "LOCAL_VISIBLE", "NOT_VISIBLE_TO_PARTICIPANT"]
+    },
+    "secretClaim": {
+      "$comment": "Defaults to false when absent. true together with transparency OPEN_SOURCE is refused by the runtime.",
+      "type": "boolean"
+    },
+    "architectureId": {
+      "type": "string",
+      "minLength": 3
+    },
+    "architectureKind": {
+      "type": "string",
+      "minLength": 3
+    },
+    "hashAlgorithm": {
+      "enum": ["sha256"]
+    },
+    "definitionDigest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "digestProvenance": { "$ref": "#/$defs/provenance" },
+    "scoringDigest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "visibleTestsDigest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "hiddenTestsDigest": {
+      "$comment": "Hidden test bytes are not published; only their digest is bound.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "harnessDigest": {
+      "$comment": "Null means not known here and stays null.",
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "scoringBindings": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["automatedMaximum", "humanMaximum", "maximum", "categories"],
+      "properties": {
+        "automatedMaximum": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "humanMaximum": {
+          "type": "number",
+          "minimum": 0
+        },
+        "maximum": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "categories": {
+          "$comment": "Category maxima must not exceed maximum (checked by the runtime).",
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": { "type": "number", "minimum": 0 }
+        }
+      }
+    },
+    "notes": {
+      "type": ["string", "null"],
+      "minLength": 1
+    },
+    "identityDigest": {
+      "$comment": "Recomputed over the record's canonical bytes excluding the self-digest fields.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "$defs": {
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "procedure"],
+      "properties": {
+        "kind": {
+          "enum": ["COMPUTED", "INHERITED"]
+        },
+        "procedure": {
+          "type": "string",
+          "minLength": 3
+        },
+        "inputs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    },
+    "categoryMaxima": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-zA-Z0-9_]+$" },
+      "additionalProperties": { "type": "number", "minimum": 0 }
+    }
+  }
+}

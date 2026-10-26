@@ -1,0 +1,6 @@
+import type { Result, LegacyResultEnvelope } from '../core/manifest.mjs';
+import type { Report } from './report.mjs';
+export type ClassifiedInput = {readonly family:'REPORT';readonly record:Report}|{readonly family:'C1_RESULT';readonly record:Result}|{readonly family:'LEGACY';readonly record:LegacyResultEnvelope};
+export declare class ResultInputError extends Error {readonly code:'RESULT_INPUT_INVALID';constructor(message:string)}
+/** No upgrade/authentication: validates each input as its own family. Invalid JSON and non-object inputs surface as ResultInputError (RESULT_INPUT_INVALID). A recognized legacy envelope is reconstructed via the unchanged readLegacyResult; only a successfully reconstructed source whose canonical envelope differs from the claimed envelope surfaces as ResultInputError. If reconstruction itself refuses the malformed source, that original legacy-reader error propagates in its own class; unknown/unsupported legacy schemas, malformed legacy flags and objects no longer recognized as envelopes are refused by that unchanged legacy reader in its own class. Existing C1/C4/report/evidence/measurement errors propagate unchanged. No universal error class is promised. */
+export declare function classifyResultInput(raw:unknown):ClassifiedInput;

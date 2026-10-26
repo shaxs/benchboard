@@ -1,0 +1,21 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {compareResults,validateComparison,ComparisonError} from '../../packages/results/comparison.mjs';
+import {renderComparisonJSON,renderComparisonText} from '../../packages/results/comparison-exports.mjs';
+import {privateExportFixture} from './export-fixture.mjs';
+test('S7 refused semantics, sparse members, request bounds and serialization payloads cannot drop inputs or leak raw details',async t=>{
+  const f=await privateExportFixture(t),missing=structuredClone(f.parent);missing.actualEvaluator=null;
+  const sparse=Array(3);sparse[1]=f.parent;sparse[2]=missing;
+  const out=compareResults({inputs:sparse,baselineIndex:1});assert.equal(out.items.length,3);assert.deepEqual(out.items.map(i=>i.disposition),['REFUSED','BASELINE','REFUSED']);
+  assert.deepEqual(out.items[2].reasons,['INPUT_REFUSED']);assert.equal(out.items[2].summary,null);
+  const unknown=compareResults({inputs:[null,null],baselineIndex:0});assert.equal(unknown.items.length,2);assert.ok(unknown.items.every(i=>i.disposition==='REFUSED'));
+  const refusedBase=compareResults({inputs:[null,f.parent,3,f.child],baselineIndex:0});
+  assert.deepEqual(refusedBase.items.map(i=>i.disposition),['REFUSED','BLOCKED','REFUSED','BLOCKED']);
+  assert.deepEqual(refusedBase.items.map(i=>i.reasons),[['INPUT_REFUSED'],['BASELINE_UNAVAILABLE'],['INPUT_REFUSED'],['BASELINE_UNAVAILABLE']]);
+  assert.ok(refusedBase.items.every(i=>Object.values(i.deltas).every(value=>value===null)));
+  assert.equal(compareResults({inputs:Array(32).fill(f.parent),baselineIndex:31}).items.length,32);
+  for(const request of [{inputs:Array(33).fill(f.parent),baselineIndex:0},{inputs:[f.parent,f.parent],baselineIndex:0.5},{inputs:[f.parent,f.parent],baselineIndex:'0'},null,[]])assert.throws(()=>compareResults(request),e=>e instanceof ComparisonError);
+  const smuggle=structuredClone(out);Object.defineProperty(smuggle,'toJSON',{value:()=>({...out,rawLogs:'PRIVATE_SERIALIZATION_CANARY'})});
+  for(const validate of [validateComparison,renderComparisonJSON,renderComparisonText])assert.throws(()=>validate(smuggle),e=>e instanceof ComparisonError);
+  const edited=structuredClone(out);edited.items[0].reasons=['PRIVATE_REASON_CANARY'];assert.throws(()=>validateComparison(edited),e=>e instanceof ComparisonError);
+});

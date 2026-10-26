@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://benchboard.local.neutral/schemas/measurement-inputs.schema.json",
+  "title": "Private report measurement source references",
+  "type": "object", "additionalProperties": false, "required": ["sources"],
+  "properties": {"sources": {"type": "array", "minItems": 2, "maxItems": 4, "items": {"oneOf": [
+    {"type": "object", "additionalProperties": false, "required": ["kind", "digest", "record"], "properties": {"kind": {"const": "lifecycle"}, "digest": {"$ref": "#/$defs/digest"}, "record": {"$ref": "https://benchboard.local.neutral/schemas/lifecycle.schema.json"}}},
+    {"type": "object", "additionalProperties": false, "required": ["kind", "digest", "record"], "properties": {"kind": {"const": "snapshot-proof"}, "digest": {"$ref": "#/$defs/digest"}, "record": {"$ref": "https://benchboard.local/schemas/snapshot-proof.schema.json"}}},
+    {"type": "object", "additionalProperties": false, "required": ["kind", "digest", "record"], "properties": {"kind": {"const": "token-input"}, "digest": {"$ref": "#/$defs/digest"}, "record": {"$ref": "#/$defs/tokens"}}},
+    {"type": "object", "additionalProperties": false, "required": ["kind", "digest", "recordId"], "properties": {"kind": {"const": "evaluation"}, "digest": {"$ref": "#/$defs/digest"}, "recordId": {"type": "string", "minLength": 3, "maxLength": 128}}}
+  ]}}},
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "count": {"type": ["integer", "null"], "minimum": 0, "maximum": 4503599627370495},
+    "tokens": {"type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "kind", "sourceId", "scope", "inputIncludesCacheReads", "inputTokens", "outputTokens", "cacheReadTokens"],
+      "properties": {
+        "schemaVersion": {"const": "1.0.0"}, "kind": {"const": "NeutralTokenInput"}, "sourceId": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$"},
+        "scope": {"const": "RUN_TOTAL"}, "inputIncludesCacheReads": {"const": true},
+        "inputTokens": {"$ref": "#/$defs/count"}, "outputTokens": {"$ref": "#/$defs/count"}, "cacheReadTokens": {"$ref": "#/$defs/count"}
+      }
+    }
+  }
+}

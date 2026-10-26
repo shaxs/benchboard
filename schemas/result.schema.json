@@ -1,0 +1,624 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://benchboard.local.neutral/schemas/result.schema.json",
+  "title": "Result (neutral BenchBoard contract)",
+  "description": "Neutral result record binding the run, frozen submission and the three identities it describes, with separately stated lifecycle, evaluator execution, human review and assessment-trust axes. A successful local quality evaluation does not establish governed timing or certification: this release implements no review grant or certification mechanism, so assessment trust is exactly UNTRUSTED_LEGACY, INELIGIBLE_LOCAL_ASSESSMENT or LOCAL_SELF_ASSESSMENT (LOCAL_SELF_ASSESSMENT is the self-issued ceiling and no field may upgrade it). Human UI is optional and carries pending/scored review only; no numerical reference UI score is invented. Historical 1.0/1.1/1.2 data stays in marked legacy envelopes produced by readLegacyResult and can never be validated into this record shape.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "resultId",
+    "lifecycle",
+    "runStatus",
+    "scoreEligibility",
+    "architectureId",
+    "hashAlgorithm",
+    "bindings",
+    "quality",
+    "measurements",
+    "evaluationTrust",
+    "evaluationTrustBasis",
+    "humanReview",
+    "limitations"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "$comment": "Schema major is the discriminator; only major 1 is read and unknown majors are rejected, never coerced. Legacy 1.0/1.1/1.2 shapes are read by readLegacyResult, not by this schema.",
+      "type": "string",
+      "pattern": "^1\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+    },
+    "kind": {
+      "const": "Result"
+    },
+    "resultId": {
+      "type": "string",
+      "minLength": 3
+    },
+    "lifecycle": {
+      "enum": [
+        "DRAFT",
+        "FROZEN",
+        "EVALUATED",
+        "ARCHIVED"
+      ]
+    },
+    "runStatus": {
+      "$comment": "SEEDED_NOT_STARTED and ABORTED do not carry a score.",
+      "enum": [
+        "COMPLETED",
+        "TIME_LIMIT",
+        "TIME_LIMIT_OVERRUN",
+        "STOP_FAILURE",
+        "INFRASTRUCTURE_FAILURE",
+        "ABORTED",
+        "SEEDED_NOT_STARTED"
+      ]
+    },
+    "evaluatorExecution": {
+      "$comment": "Optional and null-allowed: absent honestly means no evaluator execution was recorded, and an evaluation that could not run is INFRASTRUCTURE_ERROR, never a failed result.",
+      "enum": [
+        "SUCCESS",
+        "FAILURE",
+        "INFRASTRUCTURE_ERROR",
+        null
+      ]
+    },
+    "scoreEligibility": {
+      "enum": [
+        "ELIGIBLE_NOT_RUN",
+        "ELIGIBLE_PENDING_HUMAN_REVIEW",
+        "SCORED",
+        "INELIGIBLE"
+      ]
+    },
+    "stopResult": {
+      "enum": [
+        "COMPLETED",
+        "STOPPED",
+        "STOP_FAILURE",
+        "UNKNOWN",
+        null
+      ]
+    },
+    "architectureId": {
+      "type": "string",
+      "minLength": 3
+    },
+    "hashAlgorithm": {
+      "enum": [
+        "sha256"
+      ]
+    },
+    "bindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "$comment": "Immutable bindings derived from the run manifest, frozen submission and the three identities; measurement sources must point at these same records.",
+      "required": [
+        "manifestId",
+        "runId",
+        "frozenSubmissionId",
+        "treeDigest",
+        "manifestDigest",
+        "toolingIdentityDigest",
+        "challengeIdentityDigest",
+        "evaluatorIdentityDigest",
+        "challengeId",
+        "challengeVersion",
+        "candidateVersion",
+        "evaluatorId",
+        "evaluatorVersion",
+        "toolingId",
+        "toolingVersion",
+        "workloadDigest"
+      ],
+      "properties": {
+        "manifestId": {
+          "type": "string",
+          "minLength": 3
+        },
+        "runId": {
+          "type": "string",
+          "minLength": 3
+        },
+        "frozenSubmissionId": {
+          "type": "string",
+          "minLength": 3
+        },
+        "treeDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "manifestDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "toolingIdentityDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "challengeIdentityDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "evaluatorIdentityDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "challengeId": {
+          "type": "string",
+          "minLength": 3
+        },
+        "challengeVersion": {
+          "type": "string",
+          "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+        },
+        "candidateVersion": {
+          "type": "string",
+          "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*))?(?:-[0-9A-Za-z]+(?:\\.[0-9A-Za-z]+)*)?$"
+        },
+        "evaluatorId": {
+          "type": "string",
+          "minLength": 3
+        },
+        "evaluatorVersion": {
+          "type": "string",
+          "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+        },
+        "toolingId": {
+          "type": "string",
+          "minLength": 3
+        },
+        "toolingVersion": {
+          "type": "string",
+          "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+        },
+        "workloadDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "$comment": "Final quality is null/absent unless SCORED. SCORED requires numeric quality/humanUI, evaluator SUCCESS, a scored named human review and coherent eligibility; allOf enforces these axes. The 80 automated + 20 human UI split and all arithmetic stay the evaluator's scoring authority.",
+      "required": [
+        "automated",
+        "automatedMaximum",
+        "humanMaximum",
+        "qualityMaximum",
+        "status",
+        "categories"
+      ],
+      "properties": {
+        "automated": {
+          "type": "number",
+          "minimum": 0
+        },
+        "automatedMaximum": {
+          "type": "number",
+          "minimum": 0
+        },
+        "humanUI": {
+          "$comment": "Exactly null until a human scored the optional UI component.",
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "humanMaximum": {
+          "type": "number",
+          "minimum": 0
+        },
+        "quality": {
+          "$comment": "Exactly null until a valid human review exists.",
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "qualityMaximum": {
+          "type": "number",
+          "minimum": 0
+        },
+        "status": {
+          "enum": [
+            "HUMAN_REVIEW_PENDING",
+            "SCORED",
+            "INVALID"
+          ]
+        },
+        "categories": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "measurements": {
+      "$comment": "Each array item is a full Measurement record (schemas/measurement.schema.json); measurement IDs and non-unavailable metric names must be unique, checked by the runtime.",
+      "type": "array",
+      "items": {
+        "$ref": "measurement.schema.json"
+      }
+    },
+    "evaluationTrust": {
+      "$comment": "Assessment-trust axis. No certification or independent-review state exists in this release and a local report cannot fabricate one; a value outside this vocabulary is refused with the source of that refusal stated.",
+      "enum": [
+        "UNTRUSTED_LEGACY",
+        "INELIGIBLE_LOCAL_ASSESSMENT",
+        "LOCAL_SELF_ASSESSMENT"
+      ]
+    },
+    "evaluationTrustBasis": {
+      "$comment": "What the assessment trust rests on. Deliberately only the two honest bases exist: there is no grant, authority or certificate field to launder wording through.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "basisKind"
+      ],
+      "properties": {
+        "basisKind": {
+          "enum": [
+            "SELF_ASSESSMENT",
+            "LOCAL_PROCEDURE"
+          ]
+        },
+        "basisDigest": {
+          "$comment": "Optional; digest cited by the basis. It is never a binding digest presented as an external grant.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "reviewer": {
+          "$comment": "Required to not be the recording tooling when trust is LOCAL_SELF_ASSESSMENT (the envelope cannot review itself).",
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        }
+      }
+    },
+    "humanReview": {
+      "$comment": "Human-review axis: pending/scored only. No certification-like review outcome is representable, so a local record cannot fabricate one.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reviewStatus"
+      ],
+      "properties": {
+        "reviewId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "reviewStatus": {
+          "enum": [
+            "NOT_REVIEWED",
+            "SCORED"
+          ]
+        },
+        "reviewer": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "reviewDigest": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "reviewedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$"
+        }
+      }
+    },
+    "declaredTrustChanges": {
+      "$comment": "Nothing is elevated by a reader and no trust-raise vocabulary is implemented: a non-empty list is refused.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "limitations": {
+      "$comment": "A scored result must state the limitations that keep it honest.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "comparability": {
+      "$comment": "FULL comparability requires a complete score and is refused for historical records; formal governed comparisons remain unavailable by default and neutral code never manufactures authority for them.",
+      "enum": [
+        "NOT_COMPARABLE",
+        "LOCAL_ONLY",
+        "DECLARED_CEILING_ONLY",
+        "FULL"
+      ]
+    },
+    "historical": {
+      "$comment": "true only for a record whose trust is exactly UNTRUSTED_LEGACY; schema upgrades cannot promote a historical record.",
+      "type": "boolean"
+    },
+    "notes": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "quality": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "const": "SCORED"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          }
+        },
+        "required": [
+          "quality"
+        ]
+      },
+      "then": {
+        "required": [
+          "evaluatorExecution",
+          "humanReview"
+        ],
+        "properties": {
+          "evaluatorExecution": {
+            "const": "SUCCESS"
+          },
+          "scoreEligibility": {
+            "const": "SCORED"
+          },
+          "lifecycle": {
+            "not": {
+              "const": "DRAFT"
+            }
+          },
+          "runStatus": {
+            "not": {
+              "enum": [
+                "SEEDED_NOT_STARTED",
+                "ABORTED"
+              ]
+            }
+          },
+          "quality": {
+            "type": "object",
+            "required": [
+              "quality",
+              "humanUI"
+            ],
+            "properties": {
+              "quality": {
+                "type": "number"
+              },
+              "humanUI": {
+                "type": "number"
+              }
+            }
+          },
+          "humanReview": {
+            "type": "object",
+            "required": [
+              "reviewStatus",
+              "reviewer"
+            ],
+            "properties": {
+              "reviewStatus": {
+                "const": "SCORED"
+              },
+              "reviewer": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              }
+            }
+          },
+          "limitations": {
+            "type": "array",
+            "minItems": 1
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "quality": {
+            "type": "object",
+            "properties": {
+              "quality": {
+                "type": "null"
+              }
+            }
+          },
+          "comparability": {
+            "not": {
+              "const": "FULL"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "scoreEligibility": {
+            "const": "SCORED"
+          }
+        },
+        "required": [
+          "scoreEligibility"
+        ]
+      },
+      "then": {
+        "properties": {
+          "quality": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "const": "SCORED"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          }
+        },
+        "required": [
+          "quality"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "quality": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "const": "INVALID"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          }
+        },
+        "required": [
+          "quality"
+        ]
+      },
+      "then": {
+        "properties": {
+          "scoreEligibility": {
+            "const": "INELIGIBLE"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "scoreEligibility": {
+            "const": "ELIGIBLE_NOT_RUN"
+          }
+        },
+        "required": [
+          "scoreEligibility"
+        ]
+      },
+      "then": {
+        "properties": {
+          "quality": {
+            "type": "object",
+            "properties": {
+              "humanUI": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "humanReview": {
+            "type": "object",
+            "properties": {
+              "reviewStatus": {
+                "const": "SCORED"
+              }
+            },
+            "required": [
+              "reviewStatus"
+            ]
+          }
+        },
+        "required": [
+          "humanReview"
+        ]
+      },
+      "else": {
+        "properties": {
+          "quality": {
+            "type": "object",
+            "properties": {
+              "humanUI": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "quality": {
+            "type": "object",
+            "properties": {
+              "humanUI": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "humanUI"
+            ]
+          }
+        },
+        "required": [
+          "quality"
+        ]
+      },
+      "then": {
+        "properties": {
+          "humanReview": {
+            "type": "object",
+            "required": [
+              "reviewer"
+            ],
+            "properties": {
+              "reviewer": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

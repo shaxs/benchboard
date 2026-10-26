@@ -1,0 +1,212 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://benchboard.local.neutral/schemas/run.schema.json",
+  "title": "RunManifest (neutral BenchBoard contract)",
+  "description": "Local write-once run seed binding the tooling, challenge and evaluator identities for exactly one run, plus configuration and expected session policy. All three identity bindings are derived from their identity records and sealed by the recomputed manifestDigest; an identity ID collision is refused rather than normalised. Tooling, challenge, evaluator and candidate versions are separate named domains, so equal version strings across domains do not conflate the identities they bind. The run architecture must differ from every binding architecture, and the workspace and evidence roots must be native absolute host roots that are lexically disjoint.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "manifestId",
+    "runId",
+    "createdAt",
+    "architectureId",
+    "architectureKind",
+    "hashAlgorithm",
+    "definitionDigest",
+    "digestProvenance",
+    "bindings",
+    "harness",
+    "securityModel",
+    "configuration",
+    "participantWorkspaceRoot",
+    "evidenceRoot"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "$comment": "Schema major is the discriminator; only major 1 is read and unknown majors are rejected, never coerced.",
+      "type": "string",
+      "pattern": "^1\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+    },
+    "kind": {
+      "const": "RunManifest"
+    },
+    "manifestId": {
+      "type": "string",
+      "minLength": 3
+    },
+    "runId": {
+      "type": "string",
+      "minLength": 3
+    },
+    "createdAt": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$",
+      "$comment": "ISO-8601 UTC timestamp."
+    },
+    "architectureId": {
+      "$comment": "Must not reuse any binding architecture ID (checked by the runtime).",
+      "type": "string",
+      "minLength": 3
+    },
+    "architectureKind": {
+      "type": "string",
+      "minLength": 3
+    },
+    "hashAlgorithm": {
+      "enum": ["sha256"]
+    },
+    "definitionDigest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "digestProvenance": { "$ref": "#/$defs/provenance" },
+    "bindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tooling", "challenge", "evaluator"],
+      "$comment": "Identity binding envelopes. tooling, challenge and evaluator IDs must be distinct; each binding's identityDigest is recomputed at creation time from the validated identity it names. The tooling identity digest cannot be re-bound silently: any binding change invalidates the recomputed manifestDigest.",
+      "properties": {
+        "tooling": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["toolingId", "architectureId", "toolingIdentityDigest", "toolingVersion", "toolingComponent", "installedDigest"],
+          "properties": {
+            "toolingId": { "type": "string", "minLength": 3 },
+            "architectureId": { "type": "string", "minLength": 3 },
+            "toolingIdentityDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+            "toolingVersion": { "type": "string", "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$" },
+            "toolingComponent": { "type": "string", "minLength": 1 },
+            "installedDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+            "adapterName": { "type": "string", "minLength": 1 },
+            "adapterVersion": { "type": ["string", "null"], "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$" }
+          }
+        },
+        "challenge": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["challengeId", "architectureId", "challengeIdentityDigest", "challengeVersion", "workloadDigest", "candidateVersion"],
+          "properties": {
+            "challengeId": { "type": "string", "minLength": 3 },
+            "architectureId": { "type": "string", "minLength": 3 },
+            "challengeIdentityDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+            "challengeVersion": { "type": "string", "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$" },
+            "workloadDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+            "declaredCeilingMinutes": {
+              "type": ["integer", "null"],
+              "minimum": 1,
+              "maximum": 1440
+            },
+            "candidateVersion": {
+              "$comment": "Preserved original candidate version; a separate domain from tooling and evaluator versions.",
+              "type": "string",
+              "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*))?(?:-[0-9A-Za-z]+(?:\\.[0-9A-Za-z]+)*)?$"
+            }
+          }
+        },
+        "evaluator": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["evaluatorId", "architectureId", "evaluatorIdentityDigest", "evaluatorVersion", "scoringDigest", "exposure"],
+          "properties": {
+            "evaluatorId": { "type": "string", "minLength": 3 },
+            "architectureId": { "type": "string", "minLength": 3 },
+            "evaluatorIdentityDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+            "evaluatorVersion": { "type": "string", "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$" },
+            "scoringDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+            "exposure": { "enum": ["PUBLIC", "OWNER_LOCAL", "PRIVATE"] }
+          }
+        }
+      }
+    },
+    "harness": {
+      "$comment": "Descriptive execution name (e.g. manual). Never a scoring authority.",
+      "type": "string",
+      "minLength": 1
+    },
+    "securityModel": {
+      "enum": [
+        "COOPERATIVE_WORKSPACE_NO_ADVERSARIAL_OS_CONTAINMENT",
+        "OS_CONTAINED_WORKSPACE",
+        "UNSPECIFIED"
+      ]
+    },
+    "expectedSessionPolicy": {
+      "$comment": "Descriptive only; this contract never queries a harness. Null means not known here.",
+      "type": ["object", "null"],
+      "additionalProperties": { "type": "string" }
+    },
+    "declaredCeilingMinutes": {
+      "$comment": "Declared 1..1440 minute ceiling; must not exceed the ceiling bound by the challenge identity.",
+      "type": ["integer", "null"],
+      "minimum": 1,
+      "maximum": 1440
+    },
+    "configuration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [],
+      "$comment": "`null`-valued or absent fields mean not known here and stay null; nothing is defaulted to zero or an empty string. unknownFields is only meaningful while unknown is UNKNOWN.",
+      "properties": {
+        "harness": { "type": ["string", "null"] },
+        "model": { "type": ["string", "null"] },
+        "location": { "type": ["string", "null"] },
+        "os": { "type": ["string", "null"] },
+        "nodeVersion": { "type": ["string", "null"] },
+        "runtimeFlags": {
+          "type": ["object", "null"],
+          "additionalProperties": { "type": "string" }
+        },
+        "unknown": {
+          "enum": [null, "UNKNOWN", "UNSET"]
+        },
+        "unknownFields": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    },
+    "participantWorkspaceRoot": {
+      "$comment": "Explicit host root argument, recorded in the host's own path syntax; never reinterpreted into participant-relative POSIX inventory paths. Must be a native absolute host root (POSIX /root, Windows C:\\root or C:/root, or UNC \\\\root), and lexically disjoint from evidenceRoot (checked by the runtime).",
+      "type": "string",
+      "pattern": "^(?:[A-Za-z]:[\\\\/]|\\\\\\\\|/)"
+    },
+    "evidenceRoot": {
+      "$comment": "Explicit host root argument, recorded in the host's own path syntax. Must be a native absolute host root (POSIX /root, Windows C:\\root or C:/root, or UNC \\\\root), and lexically disjoint from participantWorkspaceRoot (checked by the runtime).",
+      "type": "string",
+      "pattern": "^(?:[A-Za-z]:[\\\\/]|\\\\\\\\|/)"
+    },
+    "notes": {
+      "type": ["string", "null"],
+      "minLength": 1
+    },
+    "manifestDigest": {
+      "$comment": "Recomputed over the record's canonical bytes excluding the self-digest fields; mismatches (including any re-bound binding) are refused.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "$defs": {
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "procedure"],
+      "properties": {
+        "kind": {
+          "enum": ["COMPUTED", "INHERITED"]
+        },
+        "procedure": {
+          "type": "string",
+          "minLength": 3
+        },
+        "inputs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

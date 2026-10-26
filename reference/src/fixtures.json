@@ -1,0 +1,295 @@
+{
+  "version": 1,
+  "issues": [
+    {
+      "id": "BB-001",
+      "title": "Fix keyboard navigation in project switcher",
+      "description": "Fix keyboard navigation in project switcher. Verify the experience with realistic project data and document the outcome.",
+      "status": "backlog",
+      "priority": "Critical",
+      "assignee": "Maya Chen",
+      "labels": ["frontend", "accessibility"],
+      "order": 0
+    },
+    {
+      "id": "BB-002",
+      "title": "Reduce dashboard bundle size",
+      "description": "Reduce dashboard bundle size. Verify the experience with realistic project data and document the outcome.",
+      "status": "backlog",
+      "priority": "High",
+      "assignee": "Alex Rivera",
+      "labels": ["performance", "frontend"],
+      "order": 1
+    },
+    {
+      "id": "BB-003",
+      "title": "Document local development setup",
+      "description": "Document local development setup. Verify the experience with realistic project data and document the outcome.",
+      "status": "backlog",
+      "priority": "Medium",
+      "assignee": "Jordan Kim",
+      "labels": ["docs"],
+      "order": 2
+    },
+    {
+      "id": "BB-004",
+      "title": "Add empty states to activity feed",
+      "description": "Add empty states to activity feed. Verify the experience with realistic project data and document the outcome.",
+      "status": "backlog",
+      "priority": "Low",
+      "assignee": "Sam Patel",
+      "labels": ["backend", "bug"],
+      "order": 3
+    },
+    {
+      "id": "BB-005",
+      "title": "Improve contrast of priority badges",
+      "description": "Improve contrast of priority badges. Verify the experience with realistic project data and document the outcome.",
+      "status": "backlog",
+      "priority": "Critical",
+      "assignee": "Maya Chen",
+      "labels": ["design", "accessibility"],
+      "order": 4
+    },
+    {
+      "id": "BB-006",
+      "title": "Audit settings form validation",
+      "description": "Audit settings form validation. Verify the experience with realistic project data and document the outcome.",
+      "status": "backlog",
+      "priority": "High",
+      "assignee": "Alex Rivera",
+      "labels": ["testing", "bug"],
+      "order": 5
+    },
+    {
+      "id": "BB-007",
+      "title": "Cache assignee avatar initials",
+      "description": "Cache assignee avatar initials. Verify the experience with realistic project data and document the outcome.",
+      "status": "backlog",
+      "priority": "Medium",
+      "assignee": "Jordan Kim",
+      "labels": ["performance"],
+      "order": 6
+    },
+    {
+      "id": "BB-008",
+      "title": "Write regression tests for label editor",
+      "description": "Write regression tests for label editor. Verify the experience with realistic project data and document the outcome.",
+      "status": "backlog",
+      "priority": "Low",
+      "assignee": "Sam Patel",
+      "labels": ["testing", "frontend"],
+      "order": 7
+    },
+    {
+      "id": "BB-009",
+      "title": "Implement issue detail drawer",
+      "description": "Implement issue detail drawer. Verify the experience with realistic project data and document the outcome.",
+      "status": "in-progress",
+      "priority": "Critical",
+      "assignee": "Maya Chen",
+      "labels": ["frontend", "accessibility"],
+      "order": 0
+    },
+    {
+      "id": "BB-010",
+      "title": "Add project search shortcuts",
+      "description": "Add project search shortcuts. Verify the experience with realistic project data and document the outcome.",
+      "status": "in-progress",
+      "priority": "High",
+      "assignee": "Alex Rivera",
+      "labels": ["performance", "frontend"],
+      "order": 1
+    },
+    {
+      "id": "BB-011",
+      "title": "Tune board spacing for tablets",
+      "description": "Tune board spacing for tablets. Verify the experience with realistic project data and document the outcome.",
+      "status": "in-progress",
+      "priority": "Medium",
+      "assignee": "Jordan Kim",
+      "labels": ["docs"],
+      "order": 2
+    },
+    {
+      "id": "BB-012",
+      "title": "Persist user workspace preferences",
+      "description": "Persist user workspace preferences. Verify the experience with realistic project data and document the outcome.",
+      "status": "in-progress",
+      "priority": "Low",
+      "assignee": "Sam Patel",
+      "labels": ["backend", "bug"],
+      "order": 3
+    },
+    {
+      "id": "BB-013",
+      "title": "Profile long issue descriptions",
+      "description": "Profile long issue descriptions. Verify the experience with realistic project data and document the outcome.",
+      "status": "in-progress",
+      "priority": "Critical",
+      "assignee": "Maya Chen",
+      "labels": ["design", "accessibility"],
+      "order": 4
+    },
+    {
+      "id": "BB-014",
+      "title": "Review onboarding copy",
+      "description": "Review onboarding copy. Verify the experience with realistic project data and document the outcome.",
+      "status": "in-progress",
+      "priority": "High",
+      "assignee": "Alex Rivera",
+      "labels": ["testing", "bug"],
+      "order": 5
+    },
+    {
+      "id": "BB-015",
+      "title": "Ship accessible status selector",
+      "description": "Ship accessible status selector. Verify the experience with realistic project data and document the outcome.",
+      "status": "done",
+      "priority": "Medium",
+      "assignee": "Jordan Kim",
+      "labels": ["performance"],
+      "order": 0
+    },
+    {
+      "id": "BB-016",
+      "title": "Resolve duplicate notification events",
+      "description": "Resolve duplicate notification events. Verify the experience with realistic project data and document the outcome.",
+      "status": "done",
+      "priority": "Low",
+      "assignee": "Sam Patel",
+      "labels": ["testing", "frontend"],
+      "order": 1
+    },
+    {
+      "id": "BB-017",
+      "title": "Update contribution guidelines",
+      "description": "Update contribution guidelines. Verify the experience with realistic project data and document the outcome.",
+      "status": "done",
+      "priority": "Critical",
+      "assignee": "Maya Chen",
+      "labels": ["frontend", "accessibility"],
+      "order": 2
+    },
+    {
+      "id": "BB-018",
+      "title": "Optimize initial board rendering",
+      "description": "Optimize initial board rendering. Verify the experience with realistic project data and document the outcome.",
+      "status": "done",
+      "priority": "High",
+      "assignee": "Alex Rivera",
+      "labels": ["performance", "frontend"],
+      "order": 3
+    }
+  ],
+  "activity": [
+    {
+      "id": "event-1",
+      "issueId": "BB-001",
+      "timestamp": "2025-01-01T10:00:00.000Z",
+      "message": "Issue created"
+    },
+    {
+      "id": "event-2",
+      "issueId": "BB-002",
+      "timestamp": "2025-01-02T10:00:00.000Z",
+      "message": "Issue created"
+    },
+    {
+      "id": "event-3",
+      "issueId": "BB-003",
+      "timestamp": "2025-01-03T10:00:00.000Z",
+      "message": "Issue created"
+    },
+    {
+      "id": "event-4",
+      "issueId": "BB-004",
+      "timestamp": "2025-01-04T10:00:00.000Z",
+      "message": "Issue created"
+    },
+    {
+      "id": "event-5",
+      "issueId": "BB-005",
+      "timestamp": "2025-01-05T10:00:00.000Z",
+      "message": "Issue created"
+    },
+    {
+      "id": "event-6",
+      "issueId": "BB-006",
+      "timestamp": "2025-01-06T10:00:00.000Z",
+      "message": "Issue created"
+    },
+    {
+      "id": "event-7",
+      "issueId": "BB-007",
+      "timestamp": "2025-01-07T10:00:00.000Z",
+      "message": "Issue created"
+    },
+    {
+      "id": "event-8",
+      "issueId": "BB-008",
+      "timestamp": "2025-01-08T10:00:00.000Z",
+      "message": "Issue created"
+    },
+    {
+      "id": "event-9",
+      "issueId": "BB-009",
+      "timestamp": "2025-01-09T10:00:00.000Z",
+      "message": "Issue created"
+    },
+    {
+      "id": "event-10",
+      "issueId": "BB-010",
+      "timestamp": "2025-01-10T10:00:00.000Z",
+      "message": "Issue created"
+    },
+    {
+      "id": "event-11",
+      "issueId": "BB-011",
+      "timestamp": "2025-01-11T10:00:00.000Z",
+      "message": "Issue created"
+    },
+    {
+      "id": "event-12",
+      "issueId": "BB-012",
+      "timestamp": "2025-01-12T10:00:00.000Z",
+      "message": "Issue created"
+    },
+    {
+      "id": "event-13",
+      "issueId": "BB-013",
+      "timestamp": "2025-01-13T10:00:00.000Z",
+      "message": "Issue created"
+    },
+    {
+      "id": "event-14",
+      "issueId": "BB-014",
+      "timestamp": "2025-01-14T10:00:00.000Z",
+      "message": "Issue created"
+    },
+    {
+      "id": "event-15",
+      "issueId": "BB-015",
+      "timestamp": "2025-01-15T10:00:00.000Z",
+      "message": "Issue created"
+    },
+    {
+      "id": "event-16",
+      "issueId": "BB-016",
+      "timestamp": "2025-01-16T10:00:00.000Z",
+      "message": "Issue created"
+    },
+    {
+      "id": "event-17",
+      "issueId": "BB-017",
+      "timestamp": "2025-01-17T10:00:00.000Z",
+      "message": "Issue created"
+    },
+    {
+      "id": "event-18",
+      "issueId": "BB-018",
+      "timestamp": "2025-01-18T10:00:00.000Z",
+      "message": "Issue created"
+    }
+  ]
+}

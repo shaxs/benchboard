@@ -1,0 +1,12 @@
+{
+  "benchmark": "BenchBoard",
+  "version": "1.0.0-candidate.9",
+  "status": "CALIBRATION_PENDING",
+  "executionCeiling": {
+    "policy": "PER_RUN_DECLARED_IMMUTABLE_AFTER_START",
+    "field": "timeCeilingMinutes",
+    "minMinutes": 1,
+    "maxMinutes": 1440
+  },
+  "durationPolicy": "OBSERVED_RESULT_NOT_ASSUMED"
+}

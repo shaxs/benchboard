@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://benchboard.local.neutral/schemas/challenge.schema.json",
+  "title": "ChallengeIdentity (neutral BenchBoard contract)",
+  "description": "Neutral challenge identity: immutable challenge ID/version, hash algorithm, exact sorted starter path/hash entries, workload digest, canonical input digests and the architecture binding. The original candidate lineage (historical version.json fields) is preserved here rather than rewritten into tooling v0.1. The workload digest is the preserved algorithm: POSIX relative paths sorted lexically, pairs [path, sha256(bytes)], sha256 over the JSON pair list; it is recomputed and compared, never trusted, by packages/core/manifest.mjs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "challengeId",
+    "challengeVersion",
+    "architectureId",
+    "architectureKind",
+    "hashAlgorithm",
+    "definitionDigest",
+    "digestProvenance",
+    "workloadProvenance",
+    "publicPrdDigest",
+    "visibleHarnessDigest",
+    "fixtureDigest",
+    "starterInventory",
+    "workloadDigest",
+    "candidateLineage"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "$comment": "Schema major is the discriminator; only major 1 is read and unknown majors are rejected, never coerced.",
+      "type": "string",
+      "pattern": "^1\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+    },
+    "kind": {
+      "const": "ChallengeIdentity"
+    },
+    "challengeId": {
+      "type": "string",
+      "minLength": 3
+    },
+    "challengeVersion": {
+      "$comment": "The challenge release version on its own train; tooling and evaluator versions are separate domains, so equal version strings do not conflate the identities.",
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+    },
+    "architectureId": {
+      "type": "string",
+      "minLength": 3
+    },
+    "architectureKind": {
+      "type": "string",
+      "minLength": 3
+    },
+    "hashAlgorithm": {
+      "enum": ["sha256"]
+    },
+    "definitionDigest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "digestProvenance": { "$ref": "#/$defs/provenance" },
+    "workloadProvenance": { "$ref": "#/$defs/provenance" },
+    "provenanceInputs": {
+      "type": "array",
+      "$comment": "Required when digestProvenance.kind is INHERITED: the records an inherited workload digest was read from.",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "publicPrdDigest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "visibleHarnessDigest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "fixtureDigest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "starterInventory": {
+      "$comment": "Each entry is exactly [posixPath, fileDigest]. Paths are participant-relative POSIX (no backslash, no colon, no ASCII control character U+0000-001F or DEL, relative, no absolute or nested form, no . or .. segments, no . or .. dot presentation in any segment, no trailing or empty segments) and sorted ascending with no duplicates; the runtime refuses everything else, and the same path contract is enforced by packages/core/identity.mjs hashEntries and by packages/core/manifest.mjs posixPathIssues (one exact path definition across identity, manifest/runtime and this schema).",
+      "type": "array",
+      "items": {
+        "type": "array",
+        "minItems": 2,
+        "maxItems": 2,
+        "prefixItems": [
+          { "type": "string", "pattern": "^(?:(?!\\.{1,2}(?:$|/))[^/\\\\:\\u0000-\\u001F\\u007F]+)(?:/(?:(?!\\.{1,2}(?:$|/))[^/\\\\:\\u0000-\\u001F\\u007F]+))*$" },
+          { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        ],
+        "items": false
+      }
+    },
+    "workloadDigest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "declaredCeilingMinutes": {
+      "$comment": "Declared per-run ceiling in minutes (1..1440); manual timing records a declaration without claiming enforcement.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1440
+    },
+    "candidateLineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidateVersion", "candidateStatus", "sourceCommit"],
+      "properties": {
+        "candidateVersion": {
+          "$comment": "The original candidate version preserved exactly as the historical lineage stated it (may carry a prerelease tag, e.g. 1.0.0-candidate.9); a separate release train from the tooling, challenge and evaluator versions, bound by identity IDs and digests, not placed in an order against any of them.",
+          "type": "string",
+          "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*))?(?:-[0-9A-Za-z]+(?:\\.[0-9A-Za-z]+)*)?$"
+        },
+        "candidateStatus": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceCommit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{7,64}$"
+        },
+        "sourceTag": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reviewPacketDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "reviewStatus": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidenceManifestDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "lineageNotes": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "notes": {
+      "type": ["string", "null"],
+      "minLength": 1
+    },
+    "identityDigest": {
+      "$comment": "Recomputed over the record's canonical bytes excluding the self-digest fields.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "$defs": {
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "procedure"],
+      "properties": {
+        "kind": {
+          "enum": ["COMPUTED", "INHERITED"]
+        },
+        "procedure": {
+          "type": "string",
+          "minLength": 3
+        },
+        "inputs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

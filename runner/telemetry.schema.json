@@ -1,0 +1,786 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "enum": [
+        "1.0",
+        "1.1",
+        "1.2"
+      ]
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "runId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "benchmarkVersion": {
+          "type": "string"
+        },
+        "architectureId": {
+          "type": "string"
+        },
+        "startedAt": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$"
+        },
+        "completedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "COMPLETED",
+            "TIME_LIMIT",
+            "TIME_LIMIT_OVERRUN",
+            "STOP_FAILURE",
+            "INFRASTRUCTURE_FAILURE"
+          ]
+        },
+        "sessionPolicy": {
+          "type": "string"
+        },
+        "configuration": {
+          "type": "object"
+        },
+        "deadlineAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "observationEndedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stopResult": {
+          "enum": [
+            "COMPLETED",
+            "STOPPED",
+            "STOP_FAILURE",
+            "UNKNOWN",
+            null
+          ]
+        },
+        "timeCeilingMinutes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 1440
+        },
+        "terminationRequestedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$"
+        },
+        "terminationOutcome": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "STOPPED",
+            "COMPLETED",
+            "STOP_FAILURE",
+            "STOP_NOT_REQUESTED",
+            "PROCESS_EXIT",
+            null
+          ]
+        },
+        "executionId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "teamId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "candidateVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "workloadHash": {
+          "type": "string",
+          "minLength": 1
+        },
+        "watchdogPid": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "watchdogNonce": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "runId",
+        "benchmarkVersion",
+        "architectureId",
+        "startedAt",
+        "completedAt",
+        "status",
+        "sessionPolicy",
+        "configuration"
+      ]
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "exportedAt": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$"
+        },
+        "sourceHash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "source",
+        "exportedAt",
+        "sourceHash"
+      ]
+    },
+    "captain": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "model": {
+          "type": "string"
+        },
+        "location": {
+          "enum": [
+            "local",
+            "cloud"
+          ]
+        },
+        "tokens": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "inputTokens": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "cacheReadTokens": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "outputTokens": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "modelSteps": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "compactions": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "toolCalls": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            }
+          },
+          "required": [
+            "inputTokens",
+            "cacheReadTokens",
+            "outputTokens",
+            "modelSteps",
+            "compactions",
+            "toolCalls"
+          ]
+        },
+        "modelWallSeconds": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "humanInterventions": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        }
+      },
+      "required": [
+        "model",
+        "location",
+        "tokens",
+        "modelWallSeconds",
+        "humanInterventions"
+      ]
+    },
+    "workers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "logicalMember": {
+            "type": "string",
+            "minLength": 1
+          },
+          "model": {
+            "type": "string",
+            "minLength": 1
+          },
+          "location": {
+            "enum": [
+              "local",
+              "cloud"
+            ]
+          },
+          "availableStartedAt": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$"
+          },
+          "availableCompletedAt": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$"
+          },
+          "intervals": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "startedAt": {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$"
+                },
+                "completedAt": {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$"
+                },
+                "kind": {
+                  "enum": [
+                    "busy",
+                    "dependencyBlocked",
+                    "schedulerIdle",
+                    "unexplainedIdle"
+                  ]
+                }
+              },
+              "required": [
+                "startedAt",
+                "completedAt",
+                "kind"
+              ]
+            }
+          }
+        },
+        "required": [
+          "logicalMember",
+          "model",
+          "location",
+          "availableStartedAt",
+          "availableCompletedAt",
+          "intervals"
+        ]
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "taskId": {
+            "type": "string"
+          },
+          "dependencies": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string"
+            }
+          },
+          "taskType": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "taskId",
+          "dependencies",
+          "taskType"
+        ]
+      }
+    },
+    "attempts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "logicalMember": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "location": {
+            "enum": [
+              "local",
+              "cloud"
+            ]
+          },
+          "taskId": {
+            "type": "string"
+          },
+          "attemptId": {
+            "type": "string"
+          },
+          "dispatchClass": {
+            "type": "string"
+          },
+          "sessionId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sessionGeneration": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "startedAt": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$"
+          },
+          "completedAt": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$"
+          },
+          "firstMeaningfulArtifactAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "firstPassingTestAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "enum": [
+              "COMPLETED",
+              "FAILED",
+              "TIME_LIMIT",
+              "CANCELLED"
+            ]
+          },
+          "tokens": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "inputTokens": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "cacheReadTokens": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "outputTokens": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "modelSteps": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "compactions": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "toolCalls": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              }
+            },
+            "required": [
+              "inputTokens",
+              "cacheReadTokens",
+              "outputTokens",
+              "modelSteps",
+              "compactions",
+              "toolCalls"
+            ]
+          },
+          "decodeTokensPerSecond": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "ttftMs": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "modelWallSeconds": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "startingContextTokens": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "endingContextTokens": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "cacheGrowthTokens": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "focusedTestsPassed": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "focusedTestsTotal": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "reworkSeconds": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "falseCompletion": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "stalls": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "captainWakeups": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "invalidToolCalls": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "scopeExpansions": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "integrationDefects": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "humanInterventions": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          }
+        },
+        "required": [
+          "logicalMember",
+          "model",
+          "location",
+          "taskId",
+          "attemptId",
+          "dispatchClass",
+          "sessionId",
+          "sessionGeneration",
+          "startedAt",
+          "completedAt",
+          "firstMeaningfulArtifactAt",
+          "firstPassingTestAt",
+          "status",
+          "tokens",
+          "decodeTokensPerSecond",
+          "ttftMs",
+          "modelWallSeconds",
+          "startingContextTokens",
+          "endingContextTokens",
+          "cacheGrowthTokens",
+          "focusedTestsPassed",
+          "focusedTestsTotal",
+          "reworkSeconds",
+          "falseCompletion",
+          "stalls",
+          "captainWakeups",
+          "invalidToolCalls",
+          "scopeExpansions",
+          "integrationDefects",
+          "humanInterventions"
+        ]
+      }
+    },
+    "gpuReservations": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "gpuId": {
+            "type": "string"
+          },
+          "startedAt": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$"
+          },
+          "completedAt": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?Z$"
+          },
+          "location": {
+            "enum": [
+              "local",
+              "cloud"
+            ]
+          },
+          "deviceClass": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "gpuId",
+          "startedAt",
+          "completedAt"
+        ]
+      }
+    },
+    "orchestration": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "captainTakeovers": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "humanInterventions": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "reassignments": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "independentRotations": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "reviewFindings": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "sotaFindings": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        }
+      },
+      "required": [
+        "captainTakeovers",
+        "humanInterventions",
+        "reassignments",
+        "independentRotations",
+        "reviewFindings",
+        "sotaFindings"
+      ]
+    },
+    "cloud": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "costUsd": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "provider": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "costUsd",
+        "provider"
+      ]
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "run",
+    "provenance",
+    "captain",
+    "workers",
+    "tasks",
+    "attempts",
+    "gpuReservations",
+    "orchestration",
+    "cloud"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

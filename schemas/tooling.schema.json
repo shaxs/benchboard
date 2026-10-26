@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://benchboard.local.neutral/schemas/tooling.schema.json",
+  "title": "ToolingIdentity (neutral BenchBoard contract)",
+  "description": "Neutral tooling identity: tooling version, revision, installed package digest and the architecture binding of this identity. The tooling version belongs to the tooling release train alone; tooling, challenge, candidate and evaluator versions are separate named domains, so equal version strings across domains do not conflate the identities they bind. Invariants not expressible here — recomputed digests, duplicate-refusal and immutable binding checks — are enforced by packages/core/manifest.mjs validateRecord('ToolingIdentity', ...).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "toolingId",
+    "toolingVersion",
+    "toolingComponent",
+    "revision",
+    "installedDigest",
+    "architectureId",
+    "architectureKind",
+    "hashAlgorithm",
+    "definitionDigest",
+    "digestProvenance"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "$comment": "Schema major is the discriminator. Only major 1 is read by this release; unknown majors and malformed versions (missing or extra components, leading zeros) are rejected and never coerced. Compatible minor and patch versions do not bypass the runtime invariants.",
+      "type": "string",
+      "pattern": "^1\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+    },
+    "kind": {
+      "const": "ToolingIdentity"
+    },
+    "toolingId": {
+      "type": "string",
+      "minLength": 3
+    },
+    "toolingVersion": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+    },
+    "toolingComponent": {
+      "type": "string",
+      "minLength": 1
+    },
+    "revision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "installedDigest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "adapterName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "adapterVersion": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+    },
+    "architectureId": {
+      "type": "string",
+      "minLength": 3
+    },
+    "architectureKind": {
+      "type": "string",
+      "minLength": 3
+    },
+    "hashAlgorithm": {
+      "enum": ["sha256"]
+    },
+    "definitionDigest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "digestProvenance": { "$ref": "#/$defs/provenance" },
+    "supportedContracts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contractsVersion", "kinds"],
+      "properties": {
+        "contractsVersion": {
+          "type": "string",
+          "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+        },
+        "kinds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "ToolingIdentity",
+              "ChallengeIdentity",
+              "EvaluatorIdentity",
+              "RunManifest",
+              "FrozenSubmission",
+              "Measurement",
+              "Result"
+            ]
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": ["string", "null"],
+      "minLength": 1
+    },
+    "identityDigest": {
+      "$comment": "Recomputed over the record's canonical bytes excluding the self-digest fields; mismatches are refused by the runtime.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "$defs": {
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "procedure"],
+      "properties": {
+        "kind": {
+          "enum": ["COMPUTED", "INHERITED"]
+        },
+        "procedure": {
+          "type": "string",
+          "minLength": 3
+        },
+        "inputs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

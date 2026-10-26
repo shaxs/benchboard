@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://benchboard.local.neutral/schemas/report.schema.json",
+  "title": "Local self-assessment Report (additive; C1 Result is unchanged)",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "kind", "reportId", "createdAt", "reportDigest", "bindings", "actualEvaluator", "configuration", "execution", "quality", "evidence", "measurements", "provenance", "artifacts"],
+  "properties": {
+    "schemaVersion": {"type": "string", "pattern": "^1\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"},
+    "kind": {"const": "Report"},
+    "reportId": {"$ref": "#/$defs/id"},
+    "createdAt": {"$ref": "#/$defs/utc"},
+    "reportDigest": {"$ref": "#/$defs/digest"},
+    "bindings": {
+      "type": "object", "additionalProperties": false,
+      "required": ["manifestId", "runId", "snapshotId", "frozenSubmissionId", "treeDigest", "manifestDigest", "toolingIdentityDigest", "challengeIdentityDigest", "evaluatorIdentityDigest", "challengeId", "challengeVersion", "candidateVersion", "evaluatorId", "evaluatorVersion", "toolingId", "toolingVersion", "workloadDigest"],
+      "properties": {
+        "manifestId": {"$ref": "#/$defs/id"}, "runId": {"$ref": "#/$defs/id"}, "snapshotId": {"$ref": "#/$defs/id"}, "frozenSubmissionId": {"$ref": "#/$defs/id"},
+        "treeDigest": {"$ref": "#/$defs/digest"}, "manifestDigest": {"$ref": "#/$defs/digest"},
+        "toolingIdentityDigest": {"$ref": "#/$defs/digest"}, "challengeIdentityDigest": {"$ref": "#/$defs/digest"}, "evaluatorIdentityDigest": {"$ref": "#/$defs/digest"},
+        "challengeId": {"$ref": "#/$defs/id"}, "challengeVersion": {"$ref": "#/$defs/label"}, "candidateVersion": {"$ref": "#/$defs/label"},
+        "evaluatorId": {"$ref": "#/$defs/id"}, "evaluatorVersion": {"$ref": "#/$defs/label"}, "toolingId": {"$ref": "#/$defs/id"}, "toolingVersion": {"$ref": "#/$defs/label"}, "workloadDigest": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "actualEvaluator": {"anyOf": [{"type": "null"}, {
+      "type": "object", "additionalProperties": false,
+      "required": ["semanticDigest", "packageDigest", "evaluatorVersion", "scoringVersion", "originalCandidate"],
+      "properties": {
+        "semanticDigest": {"$ref": "#/$defs/digest"}, "packageDigest": {"$ref": "#/$defs/digest"}, "evaluatorVersion": {"$ref": "#/$defs/label"}, "scoringVersion": {"$ref": "#/$defs/label"},
+        "originalCandidate": {"type": "object", "additionalProperties": false, "required": ["evaluator", "scoring"], "properties": {"evaluator": {"$ref": "#/$defs/digest"}, "scoring": {"$ref": "#/$defs/digest"}}}
+      }
+    }]},
+    "configuration": {
+      "type": "object", "additionalProperties": false,
+      "required": ["harness", "model", "workerCount", "executionMode", "declaredCeilingMinutes"],
+      "properties": {
+        "harness": {"type": ["string", "null"], "maxLength": 1000}, "model": {"type": ["string", "null"], "maxLength": 1000},
+        "workerCount": {"type": ["integer", "null"], "minimum": 1}, "executionMode": {"const": "MANUAL"},
+        "declaredCeilingMinutes": {"type": ["number", "null"], "minimum": 1, "maximum": 1440}
+      }
+    },
+    "execution": {
+      "type": "object", "additionalProperties": false,
+      "required": ["agentOutcome", "evaluatorExecution", "humanReview", "assessmentTrust", "enforcement", "enforced"],
+      "properties": {
+        "agentOutcome": {"type": "null", "$comment": "Successful evaluation does not establish agent completion."},
+        "evaluatorExecution": {"enum": ["SUCCESS", "INFRASTRUCTURE_ERROR"]}, "humanReview": {"enum": ["NOT_REVIEWED", "SCORED"]},
+        "assessmentTrust": {"const": "LOCAL_SELF_ASSESSMENT"}, "enforcement": {"const": "manual"}, "enforced": {"const": false}
+      }
+    },
+    "quality": {"anyOf": [{"type": "null"}, {"$ref": "https://benchboard.local.neutral/schemas/evidence-bundle.schema.json#/properties/score"}, {"$ref": "#/$defs/reviewedScore"}]},
+    "evidence": {
+      "type": "object", "additionalProperties": false, "required": ["evaluationId", "bundleDigest", "bundle"],
+      "properties": {
+        "evaluationId": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/id"}]},
+        "bundleDigest": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/digest"}]},
+        "bundle": {"anyOf": [{"type": "null"}, {"$ref": "https://benchboard.local.neutral/schemas/evidence-bundle.schema.json"}]}
+      }
+    },
+    "measurements": {"type": "array", "maxItems": 13, "items": {"$ref": "https://benchboard.local.neutral/schemas/measurement.schema.json"}},
+    "provenance": {
+      "type": "object", "additionalProperties": false, "required": ["parentReportId", "parentReportDigest", "review", "sources"],
+      "properties": {"parentReportId": {"anyOf": [{"type":"null"},{"$ref":"#/$defs/id"}]}, "parentReportDigest": {"anyOf": [{"type":"null"},{"$ref":"#/$defs/digest"}]}, "review": {"anyOf": [{"type":"null"},{"$ref":"https://benchboard.local.neutral/schemas/ui-worksheet.schema.json"}]}, "sources": {"type": "array", "maxItems": 4, "items": {"type": "object"}}}
+    },
+    "artifacts": {"type": "array", "items": {"$ref": "https://benchboard.local.neutral/schemas/evidence-bundle.schema.json#/$defs/file"}}
+  },
+  "$defs": {
+    "reviewedScore": {"type":"object","additionalProperties":false,"required":["automated","automatedMaximum","areas","humanUI","humanMaximum","quality","qualityMaximum","status"],"properties":{"automated":{"type":"number","minimum":0,"maximum":80},"automatedMaximum":{"const":80},"areas":{"$ref":"https://benchboard.local.neutral/schemas/evidence-bundle.schema.json#/properties/score/properties/areas"},"humanUI":{"type":"number","minimum":0,"maximum":20},"humanMaximum":{"const":20},"quality":{"type":"number","minimum":0,"maximum":100},"qualityMaximum":{"const":100},"status":{"const":"SCORED"}}},
+    "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$"},
+    "label": {"type": "string", "minLength": 1, "maxLength": 1000},
+    "utc": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z$"}
+  }
+}

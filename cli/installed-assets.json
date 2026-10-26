@@ -1,0 +1,7 @@
+{
+  "kind": "benchboard.cli.development-assets.v1",
+  "schemaVersion": "1.0.0",
+  "developmentOnly": true,
+  "directories": ["cli", "packages/core", "packages/evaluation", "packages/results", "schemas", "adapters/manual"],
+  "files": ["package.json", "package-lock.json", "release/inventory.json", "version.json"]
+}

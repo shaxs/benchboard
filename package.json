@@ -1,0 +1,20 @@
+{
+  "name": "benchboard-owner",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "bin": {
+    "benchboard": "cli/benchboard.mjs"
+  },
+  "scripts": {
+    "benchboard": "node cli/benchboard.mjs",
+    "test": "node --test \"tests/**/*.test.mjs\"",
+    "self-test": "node runner/self-test.mjs",
+    "validate": "node evaluator/self-validate.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.51.1",
+    "ajv": "8.17.1",
+    "prettier": "3.5.3"
+  }
+}

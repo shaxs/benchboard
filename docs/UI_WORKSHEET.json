@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "UIWorksheet",
+  "reviewId": "example-review-000",
+  "reviewer": "",
+  "reviewedAt": "",
+  "baselineCompared": false,
+  "bindings": {
+    "reportId": "example-report-000",
+    "reportDigest": "0000000000000000000000000000000000000000000000000000000000000000",
+    "evaluationId": "example-evaluation-000",
+    "bundleDigest": "0000000000000000000000000000000000000000000000000000000000000000",
+    "snapshotId": "example-snapshot-000",
+    "treeDigest": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "baseline": {
+    "challengeIdentityDigest": "0000000000000000000000000000000000000000000000000000000000000000",
+    "starterDigest": "0000000000000000000000000000000000000000000000000000000000000000",
+    "workloadDigest": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "evidence": [],
+  "scores": {
+    "polish": null,
+    "hierarchy": null,
+    "board": null,
+    "drawer": null,
+    "feedback": null,
+    "responsive": null,
+    "consistency": null
+  },
+  "notes": {
+    "polish": "",
+    "hierarchy": "",
+    "board": "",
+    "drawer": "",
+    "feedback": "",
+    "responsive": "",
+    "consistency": ""
+  },
+  "improvements": {}
+}

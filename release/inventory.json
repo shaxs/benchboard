@@ -1,0 +1,235 @@
+{
+  "schema": "benchboard.c0.participant-inventory/1",
+  "authority": {
+    "baselineCommit": "c662a4a8a82fd439b607cc55c349b284d22bc8ec",
+    "allowlistKind": "EXPLICIT_FILE_ALLOWLIST",
+    "allowlistNote": "The 26 entries below are exactly the explicit participant allowlist enforced by the harness byte-equality guard at run creation. Paths are relative to the participant workspace root.",
+    "note": "Planning inventory only. Nothing here approves, freezes or publishes a release."
+  },
+  "challenge": {
+    "benchmark": "BenchBoard",
+    "version": "1.0.0-candidate.9",
+    "status": "CALIBRATION_PENDING",
+    "executionCeiling": {
+      "policy": "PER_RUN_DECLARED_IMMUTABLE_AFTER_START",
+      "field": "timeCeilingMinutes",
+      "minMinutes": 1,
+      "maxMinutes": 1440
+    },
+    "durationPolicy": "OBSERVED_RESULT_NOT_ASSUMED"
+  },
+  "hashProfile": {
+    "algorithm": "sha256",
+    "algorithmId": "sha256(JSONArray[[relPath,sha256(rawBytes)]] sorted by relPath)",
+    "perFileAlgorithm": "sha256(rawFileBytes)",
+    "pathEncoding": "POSIX-relative, sorted; directory walk orders by localeCompare(name,\"en\")",
+    "directorySkipSet": [
+      "node_modules",
+      "dist",
+      ".git"
+    ],
+    "profiles": {
+      "starterTree": "aead38d3607492066247dddc7cbfb9828860f008f6151d434210394c736cb1f8",
+      "prd": "5684791ddc9559e6f1fcbc648695758882e5ceebae82a80c0384ad07a577d252",
+      "visibleTestsTree": "ada1f830f509228472fb4b557c6b1afada99cd7631a3ea28c1d2cedd9d30d55e"
+    }
+  },
+  "participant": {
+    "fileCount": 26,
+    "totalBytes": 162134,
+    "files": [
+      {
+        "path": ".dockerignore",
+        "bytes": 20,
+        "sha256": "8dddd5bb92e96a3ba01bbf50fcbaebe72b7816695816f212e21d29022c6c11b7"
+      },
+      {
+        "path": "PRODUCT_PRD.md",
+        "bytes": 4584,
+        "sha256": "5684791ddc9559e6f1fcbc648695758882e5ceebae82a80c0384ad07a577d252"
+      },
+      {
+        "path": "README.md",
+        "bytes": 445,
+        "sha256": "bc433c3502850a1a1dd15fdc969ca8e30545c1655e052e1d090cb72c2abeab86"
+      },
+      {
+        "path": "index.html",
+        "bytes": 254,
+        "sha256": "1ae4ef7439ef69c932ea53e78b9760291bc330f90ec6c648a0dafbac34526440"
+      },
+      {
+        "path": "package-lock.json",
+        "bytes": 109616,
+        "sha256": "f8b7cfcf43a488bf114f6ee936ef722655397e9026aec5390611d2525a7b062e"
+      },
+      {
+        "path": "package.json",
+        "bytes": 663,
+        "sha256": "9087ff5bf3f720480077bf4c54f92f915689206df7561da31237f685a77d7160"
+      },
+      {
+        "path": "src/App.tsx",
+        "bytes": 4530,
+        "sha256": "378dc9fe092629f9520f894314382f5a03d29261618d3353d33c588640d0c183"
+      },
+      {
+        "path": "src/activity.ts",
+        "bytes": 258,
+        "sha256": "5715b14c3b9513ce02f1cf286888e00951a33982a13e679dc09dd5c2da7bc8d7"
+      },
+      {
+        "path": "src/analytics.ts",
+        "bytes": 731,
+        "sha256": "691ab5aefaa8c5db3e9cf266232e1b7fd6f3fa7c89d171c08e08ffa83463f445"
+      },
+      {
+        "path": "src/components/Analytics.tsx",
+        "bytes": 464,
+        "sha256": "25fdefb50e4429a78202285fe394230d98314eedd4e2bbfa997f13ebd774aabe"
+      },
+      {
+        "path": "src/components/Board.tsx",
+        "bytes": 2979,
+        "sha256": "87603be5e9aadae16b7a570692d421fd912af3107b93abab28ffa0a35d7be534"
+      },
+      {
+        "path": "src/components/Filters.tsx",
+        "bytes": 1891,
+        "sha256": "501e85715431457d721a7db18c33ceb3f396a692cd220f2f0015f8ca8c0138d8"
+      },
+      {
+        "path": "src/components/IssueDrawer.tsx",
+        "bytes": 3853,
+        "sha256": "175b2b203124bcaef3dd927d0e5257565cb28efe7fab570a28e9d95830d88387"
+      },
+      {
+        "path": "src/filters.ts",
+        "bytes": 854,
+        "sha256": "bd1eeb7bccda53c8b5e3c758cf49923481890d5c312be2e47a135f63e8f1b38e"
+      },
+      {
+        "path": "src/fixtures.json",
+        "bytes": 9174,
+        "sha256": "5206e3b9afcf3ba14a0d8e1e20862e5ac76a40646bb6b4a3bf4cd594beef9fed"
+      },
+      {
+        "path": "src/labels.ts",
+        "bytes": 109,
+        "sha256": "3bf81b770d21f57db3c55f26cc1365bd15d22b2c81369f0e58c4a1ca58d9d3ac"
+      },
+      {
+        "path": "src/legacy.json",
+        "bytes": 9173,
+        "sha256": "409e360ba1f5fc0388a53389644090b09a6a3b15f1ff153e60b3c64aaa21e101"
+      },
+      {
+        "path": "src/main.tsx",
+        "bytes": 156,
+        "sha256": "7254a29d506487188f48b2a7f33912401fe8510fcdc3306f0efad67ff25df159"
+      },
+      {
+        "path": "src/model.ts",
+        "bytes": 3984,
+        "sha256": "6ab84737cb7351c6d31dfee6e63b5055e7806d56c4e28c95161a5c6b7878d8f5"
+      },
+      {
+        "path": "src/persistence.ts",
+        "bytes": 198,
+        "sha256": "739932424cf0d221d6c2603c30190d1a5d5db8d3bde52f473ba68226acc56187"
+      },
+      {
+        "path": "src/style.css",
+        "bytes": 1456,
+        "sha256": "3441c4fa9d91c240954d913c010ac437065dec02fd19dbd48229681f82e1d1ce"
+      },
+      {
+        "path": "src/types.ts",
+        "bytes": 1058,
+        "sha256": "18164fc9c76d8325c25f5c014e2a4d857cabbacec0a630a389a190235e1b1a75"
+      },
+      {
+        "path": "tests/contracts.test.tsx",
+        "bytes": 4855,
+        "sha256": "e11dc7179febc53a00c956fd44655f37263c861ff3b3b22456dd52b7fe9acd3f"
+      },
+      {
+        "path": "tests/setup.ts",
+        "bytes": 166,
+        "sha256": "b3c57d0da4f0ff0c993cca279d5098780a15c7d8b1edac994fecd1c0c1509e5b"
+      },
+      {
+        "path": "tsconfig.json",
+        "bytes": 421,
+        "sha256": "4659d7567058fd124948dee2c2869688163e1438cb22e4a36851fc2bb58c0d60"
+      },
+      {
+        "path": "vite.config.ts",
+        "bytes": 242,
+        "sha256": "39a7a99c3a9b06bebf41f6f974254f95aa6c4ca4855253d80c6b51dfac88eb60"
+      }
+    ]
+  },
+  "preparedDependencies": {
+    "status": "NOT_INVENTORIED_FOR_RELEASE",
+    "note": "Prepared dependency bytes are outside this participant inventory. No dependency installation, resolution or publication is authorized by this record."
+  },
+  "profiles": {
+    "participant": {
+      "decision": "ALLOWLIST_ONLY",
+      "allowlist": [
+        ".dockerignore",
+        "PRODUCT_PRD.md",
+        "README.md",
+        "index.html",
+        "package-lock.json",
+        "package.json",
+        "src/App.tsx",
+        "src/activity.ts",
+        "src/analytics.ts",
+        "src/components/Analytics.tsx",
+        "src/components/Board.tsx",
+        "src/components/Filters.tsx",
+        "src/components/IssueDrawer.tsx",
+        "src/filters.ts",
+        "src/fixtures.json",
+        "src/labels.ts",
+        "src/legacy.json",
+        "src/main.tsx",
+        "src/model.ts",
+        "src/persistence.ts",
+        "src/style.css",
+        "src/types.ts",
+        "tests/contracts.test.tsx",
+        "tests/setup.ts",
+        "tsconfig.json",
+        "vite.config.ts"
+      ],
+      "default": "deny",
+      "denies": [
+        "*"
+      ]
+    },
+    "ownerDevelopmentInstallation": {
+      "decision": "NOT_FOR_EXTERNAL_RELEASE",
+      "default": "deny",
+      "denies": [
+        "*"
+      ]
+    },
+    "endUserToolingInstallation": {
+      "decision": "BLOCKED",
+      "reason": "Evaluator asset exposure and the project license are undecided owner decisions; no evaluator utility exception has been approved.",
+      "default": "deny",
+      "denies": [
+        "*"
+      ]
+    }
+  },
+  "releaseStatus": {
+    "approved": false,
+    "published": false,
+    "licenseSelected": false,
+    "supportedOsClaim": "NONE"
+  }
+}

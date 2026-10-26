@@ -1,0 +1,13 @@
+{
+  "kind": "benchboard.cli.development-installation.v1",
+  "schemaVersion": "1.0.0",
+  "developmentOnly": true,
+  "toolingVersion": "0.1.0",
+  "challengeVersion": "1.0.0",
+  "evaluatorVersion": "1.0.0",
+  "assets": "cli/installed-assets.json",
+  "workloadDigest": "aead38d3607492066247dddc7cbfb9828860f008f6151d434210394c736cb1f8",
+  "publicPrdDigest": "5684791ddc9559e6f1fcbc648695758882e5ceebae82a80c0384ad07a577d252",
+  "visibleDigest": "ada1f830f509228472fb4b557c6b1afada99cd7631a3ea28c1d2cedd9d30d55e",
+  "fixtureDigest": "097928c62ccd5d068705a8cd8a5dcf08bac12fbd4b3882cf7af49334c1a30435"
+}

@@ -1,0 +1,23 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+import {fileURLToPath} from 'node:url';
+import {spawnSync} from 'node:child_process';
+test('S7 public comparison declarations are paired and real consumers keep nullable deltas/formal false',t=>{
+  for(const name of ['comparison','comparison-exports','comparison-arithmetic'])assert.deepEqual(fs.readFileSync(new URL(`../../packages/results/${name}.d.mts`,import.meta.url)),fs.readFileSync(new URL(`../../packages/results/${name}.d.ts`,import.meta.url)));
+  const mod=name=>fileURLToPath(new URL(`../../packages/results/${name}.mjs`,import.meta.url)).replaceAll('\\','/');
+  const root=fs.mkdtempSync(path.join(os.tmpdir(),'bb-comparison-types-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+  const file=path.join(root,'consumer.mts'),compiler=fileURLToPath(new URL('../../starter/node_modules/typescript/bin/tsc',import.meta.url));
+  const run=()=>spawnSync(process.execPath,[compiler,'--noEmit','--strict','--module','NodeNext','--moduleResolution','NodeNext','--target','ES2022',file],{encoding:'utf8',timeout:30000,windowsHide:true});
+  fs.writeFileSync(file,`import {compareResults,validateComparison,ComparisonError} from ${JSON.stringify(mod('comparison'))};
+import type {DescriptiveComparison} from ${JSON.stringify(mod('comparison'))};
+import {renderComparisonJSON,renderComparisonText} from ${JSON.stringify(mod('comparison-exports'))};
+const c:DescriptiveComparison=compareResults({inputs:[{},{}],baselineIndex:0});const formal:false=c.formalComparisonAvailable;
+const quality:number|null=c.items[0].deltas.quality;const j:string=renderComparisonJSON(c);const t:string=renderComparisonText(validateComparison(c));
+const code:'COMPARISON_INVALID'=new ComparisonError().code;void [formal,quality,j,t,code];`);
+  const positive=run();assert.equal(positive.status,0,positive.stdout+positive.stderr);
+  fs.appendFileSync(file,'\nconst unavailableCannotBecomeKnown:number=c.items[0].deltas.quality;\nc.rawLogs;\n');
+  const negative=run();assert.equal(negative.status,2,negative.stdout+negative.stderr);assert.match(negative.stdout+negative.stderr,/TS2322/);assert.match(negative.stdout+negative.stderr,/TS2339: Property 'rawLogs'/);
+});
