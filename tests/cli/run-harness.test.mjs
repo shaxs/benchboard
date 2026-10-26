@@ -92,6 +92,11 @@ test('OpenCode: session id and approximate stream totals; export totals win and 
   assert.deepEqual(v2, { directory: 'C:\\w', totals: { input: 22683, output: 282, cacheRead: 10 } });
   const v1 = parseOpencodeExport('Exporting session\n' + JSON.stringify({ info: { directory: '/w' }, messages: [{ info: { tokens: { input: 1, output: 2, reasoning: 3, cache: { read: 4, write: 5 } } } }, { info: {} }] }));
   assert.deepEqual(v1, { directory: '/w', totals: { input: 10, output: 5, cacheRead: 4 } });
+  // Shape recorded from a real OpenCode 1.15.5 `opencode export`: session totals with input
+  // excluding cache reads, and the working folder as info.directory.
+  const v115 = parseOpencodeExport(JSON.stringify({ info: { id: 'ses_B', projectID: 'global', directory: '/home/u/run/workspace', version: '1.15.5',
+    tokens: { input: 7450, output: 76, reasoning: 0, cache: { read: 7399, write: 0 } } }, messages: [] }));
+  assert.deepEqual(v115, { directory: '/home/u/run/workspace', totals: { input: 14849, output: 76, cacheRead: 7399 } });
   assert.equal(parseOpencodeExport('garbage'), null);
   assert.deepEqual(harnessProfile('opencode').agentArgs({ model: 'p/m', prompt: 'P', major: 2 }), ['run', '--standalone', '--auto', '--format', 'json', '--model', 'p/m', 'P']);
   assert.deepEqual(harnessProfile('opencode').agentArgs({ model: 'p/m', prompt: 'P', major: 1 }), ['run', '--format', 'json', '--model', 'p/m', 'P']);
