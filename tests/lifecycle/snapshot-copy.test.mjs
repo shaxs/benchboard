@@ -619,11 +619,14 @@ test('cleanup preserves anything whose ownership chain or bytes cannot be proven
     workspaceRoot: wsA,
     outputRoot: snapA,
     protectedRoots: [],
+    // The replacement is built before the original is removed, so it cannot
+    // reuse the original's inodes (Linux often reuses just-freed ones).
     hooks: [() => {
+      fs.mkdirSync(path.join(snapA, 'sub.new'));
+      fs.writeFileSync(path.join(snapA, 'sub.new', 'b.txt'), 'b');
       fs.rmSync(path.join(snapA, 'sub', 'b.txt'));
       fs.rmdirSync(path.join(snapA, 'sub'));
-      fs.mkdirSync(path.join(snapA, 'sub'));
-      fs.writeFileSync(path.join(snapA, 'sub', 'b.txt'), 'b');
+      fs.renameSync(path.join(snapA, 'sub.new'), path.join(snapA, 'sub'));
     }],
   }));
   assert.ok(
@@ -631,9 +634,7 @@ test('cleanup preserves anything whose ownership chain or bytes cannot be proven
     `an equal-content ancestor replacement is caught (${error?.code})`,
   );
   assert.equal(fs.existsSync(path.join(snapA, 'sub', 'b.txt')), true, 'bytes below a replaced ancestor are never touched');
-  // Where the filesystem reuses the deleted directory's inode at once (Linux), the recreated file is
-  // reported as an identical-content foreign file instead; either way it is preserved, not deleted.
-  assert.ok(error.fate.foreignPreserved.some((entry) => entry.reason.includes('ownership-chain-not-provable') || entry.reason.includes('replaced-by-identical-content-foreign-file')), JSON.stringify(error.fate.foreignPreserved));
+  assert.ok(error.fate.foreignPreserved.some((entry) => entry.reason.includes('ownership-chain-not-provable')), JSON.stringify(error.fate.foreignPreserved));
   assert.equal(error.fate.removedFiles.includes('sub/b.txt'), false, 'no deletion through a replaced ancestor');
 
   // (b) a created file is edited in place: same inode, different bytes. The
@@ -664,8 +665,9 @@ test('cleanup preserves anything whose ownership chain or bytes cannot be proven
     outputRoot: snapC,
     protectedRoots: [],
     hooks: [() => {
+      fs.mkdirSync(`${snapC}.new`);
       fs.rmSync(snapC, { recursive: true, force: true });
-      fs.mkdirSync(snapC);
+      fs.renameSync(`${snapC}.new`, snapC);
     }],
   }));
   assert.ok(error instanceof SnapshotError, `the root replacement is caught (${error?.code})`);
@@ -875,7 +877,9 @@ test('T6 regression 2: with an EMPTY selection, a hook that replaces the claimed
     workspaceRoot: workspace,
     outputRoot: output,
     protectedRoots: [],
-    hooks: [() => { fs.rmdirSync(output); fs.mkdirSync(output); }],
+    // The replacement exists before the original is removed, so it cannot
+    // reuse the original's inode (Linux often reuses a just-freed one).
+    hooks: [() => { fs.mkdirSync(`${output}.new`); fs.rmdirSync(output); fs.renameSync(`${output}.new`, output); }],
   }));
   assert.equal(error?.code, SNAPSHOT_ERROR_CODES.OWNERSHIP_LOST, `an empty snapshot root is verified like any other (${error?.code})`);
   assert.match(String(error?.message), /claim chain/);
