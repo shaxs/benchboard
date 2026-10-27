@@ -429,7 +429,7 @@ describe('mutable replacement semantics', () => {
     );
   });
 
-  it('refuses case-ambiguous paths within the explicit root', async () => {
+  it('refuses case-ambiguous paths within the explicit root', { skip: process.platform !== 'win32' && 'storage folds case only on Windows; elsewhere these are distinct names' }, async () => {
     const root = await newRoot('case-ambiguity');
     const storage = createStorage({ root });
     await storage.createImmutable({ relativePath: 'data/Report.json', kind: 'k.alpha', id: 'a', value: 1 });

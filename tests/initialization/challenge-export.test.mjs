@@ -589,7 +589,7 @@ test('roots and manifest entries are validated exactly as documented', async (t)
     await expectCode(exportTo(fixture, output, { sourceRoot: bad }), EXPORT_ERROR_CODES.INVALID_ARGUMENT,
       `the root spelling ${JSON.stringify(bad)}`);
   }
-  for (const volume of ['/', 'C:\\']) {
+  for (const volume of ['/', ...(process.platform === 'win32' ? ['C:\\'] : [])]) {
     await expectCode(exportTo(fixture, output, { sourceRoot: volume }), EXPORT_ERROR_CODES.INVALID_ROOT,
       `the volume root ${JSON.stringify(volume)}`);
   }

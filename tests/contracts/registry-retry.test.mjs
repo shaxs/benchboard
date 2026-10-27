@@ -361,7 +361,7 @@ before(async () => {
   await real.mkdir(scratchBase, { recursive: true });
 });
 
-describe('registry staging-rename retry policy (C7a.S11.T5)', () => {
+describe('registry staging-rename retry policy (C7a.S11.T5)', { skip: process.platform !== 'win32' && 'the registry retry policy is win32-scoped' }, () => {
   // 1. Initial success: the first stage is renamed once, zero delays, a valid
   //    readback, and no leftover registry stage.
   it('renames the first registry stage once with zero delays and clean readback', () => serial(async () => {

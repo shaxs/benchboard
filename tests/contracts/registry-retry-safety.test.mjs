@@ -594,7 +594,7 @@ async function confirmChildClosed(child, close, ms) {
   }
 }
 
-describe('registry retry safety', { concurrency: 1 }, () => {
+describe('registry retry safety', { concurrency: 1, skip: !isWindows && 'the registry retry policy and its backoff are win32-scoped' }, () => {
   it('held/released gate: lock and stage carry through the refusal, a contender is refused while paused', async () => {
     const root = await newOwnedRoot('gate-held-released');
     const payload = {

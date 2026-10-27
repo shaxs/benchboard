@@ -248,8 +248,11 @@ test('root arguments must be explicit absolute non-volume paths', async (t) => {
     [{ workspaceRoot: workspace }, 'INVALID_ARGUMENT'],
     [{ workspaceRoot: workspace, outputRoot: 'relative/out', protectedRoots: [] }, 'INVALID_ROOT'],
     [{ workspaceRoot: './ws', outputRoot: path.join(root, 'out'), protectedRoots: [] }, 'INVALID_ROOT'],
-    [{ workspaceRoot: 'C:\\', outputRoot: path.join(root, 'out'), protectedRoots: [] }, 'INVALID_ROOT'],
-    [{ workspaceRoot: '\\\\localhost\\share\\ws', outputRoot: path.join(root, 'out'), protectedRoots: [] }, 'INVALID_ROOT'],
+    // Windows volume and UNC spellings are only absolute roots on Windows.
+    ...(process.platform === 'win32' ? [
+      [{ workspaceRoot: 'C:\\', outputRoot: path.join(root, 'out'), protectedRoots: [] }, 'INVALID_ROOT'],
+      [{ workspaceRoot: '\\\\localhost\\share\\ws', outputRoot: path.join(root, 'out'), protectedRoots: [] }, 'INVALID_ROOT'],
+    ] : []),
     [{ workspaceRoot: workspace, outputRoot: path.join(root, 'out') }, 'INVALID_ARGUMENT'],
     [{ workspaceRoot: workspace, outputRoot: path.join(root, 'out'), protectedRoots: 'not-an-array' }, 'INVALID_ARGUMENT'],
     [{ workspaceRoot: workspace, outputRoot: path.join(root, 'out'), protectedRoots: [], hooks: () => {} }, 'INVALID_ARGUMENT'],

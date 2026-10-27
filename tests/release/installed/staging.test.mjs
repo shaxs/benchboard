@@ -204,7 +204,7 @@ test('S3 physical-only overlap refuses despite distinct ordinary lexical roots',
   assert.equal(fs.existsSync(rig.output), false);
 }));
 
-test('S3 Windows roots must include a drive, not depend on the process current drive', () => withFixture((rig) => {
+test('S3 Windows roots must include a drive, not depend on the process current drive', { skip: process.platform !== 'win32' && 'Windows path grammar' }, () => withFixture((rig) => {
   assert.equal(process.platform, 'win32', 'this grammar acceptance targets the selected Windows host');
   for (const root of ['/x', '\\x', 'C:x']) {
     assert.throws(() => stageRelease({ sourceRoot: root, destination: rig.output, profile: rig.profile }), code('RELEASE_STAGE_ROOT'));
@@ -212,7 +212,7 @@ test('S3 Windows roots must include a drive, not depend on the process current d
   }
 }));
 
-test('S3 directory-prefix case aliases fail closed without weakening the S1 contract', () => withFixture((rig) => {
+test('S3 directory-prefix case aliases fail closed without weakening the S1 contract', { skip: process.platform !== 'win32' && 'Windows case-insensitive aliases' }, () => withFixture((rig) => {
   assert.equal(process.platform, 'win32', 'this case-alias fixture targets the selected Windows host');
   rig.profile.entries.push({ path: 'LIB/b.mjs', source: 'assets/b.mjs', bytes: 1, sha256: digest('b') });
   fs.writeFileSync(path.join(rig.source, 'assets', 'b.mjs'), 'b');

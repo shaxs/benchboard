@@ -1238,11 +1238,13 @@ const FORBIDDEN_BY_MODE = {
 };
 
 /** A syntactically well-formed value for one dependency option. */
+// A host-absolute spelling, so the mode gate (not path validation) is what answers.
+const PROBE_BASE = process.platform === 'win32' ? 'C:/somewhere' : '/somewhere';
 const OPTION_PROBE_VALUE = {
-  preparedRoot: 'C:/somewhere/prepared',
-  sourceRoot: 'C:/somewhere/source',
-  scratchRoot: 'C:/somewhere/scratch',
-  npmExecutable: 'C:/somewhere/npm.cmd',
+  preparedRoot: PROBE_BASE + '/prepared',
+  sourceRoot: PROBE_BASE + '/source',
+  scratchRoot: PROBE_BASE + '/scratch',
+  npmExecutable: PROBE_BASE + '/npm.cmd',
   expectedDependencyDigest: 'a'.repeat(64),
   offline: true,
   timeoutMs: 5000,
@@ -1295,7 +1297,7 @@ test('the mode gate is swept over every mode and every option it does not accept
     `prepared is stopped at the offline option itself: ${preparedWithOffline.message}`);
 
   const installWithOffline = await rejection(initialise(fixture, {
-    dependencies: { mode: 'install', npmExecutable: 'C:/somewhere/npm.cmd', offline: true },
+    dependencies: { mode: 'install', npmExecutable: OPTION_PROBE_VALUE.npmExecutable, offline: true },
   }));
   /* `offline` is admissible for install, so no mode gate fires and the request
    * reaches the accepted helper, which states its own required-field order: an

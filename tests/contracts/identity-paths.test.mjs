@@ -696,7 +696,8 @@ test('assertDisjointRoots rejects duplicates, containment and malformed roots', 
   assert.equal(codeOf(() => assertDisjointRoots([inner, outer])), PATH_ERROR_CODES.ROOTS_OVERLAP, 'direction does not matter');
   assert.equal(codeOf(() => assertDisjointRoots([outer, `${outer}${path.sep}`])), PATH_ERROR_CODES.DUPLICATE_ROOT, 'a trailing separator is the same directory');
   assert.equal(codeOf(() => assertDisjointRoots([outer, outer, sibling])), PATH_ERROR_CODES.DUPLICATE_ROOT);
-  assert.equal(codeOf(() => assertDisjointRoots([path.join(base, 'MiXeD'), path.join(base, 'mixed')])), PATH_ERROR_CODES.DUPLICATE_ROOT, 'case-folded spellings of one directory are refused');
+  // Roots fold case only where the filesystem does (Windows).
+  if (process.platform === 'win32') assert.equal(codeOf(() => assertDisjointRoots([path.join(base, 'MiXeD'), path.join(base, 'mixed')])), PATH_ERROR_CODES.DUPLICATE_ROOT, 'case-folded spellings of one directory are refused');
   assert.equal(codeOf(() => assertDisjointRoots([sibling, 'other/relative'])), PATH_ERROR_CODES.INVALID_ROOT);
   assert.equal(codeOf(() => assertDisjointRoots([])), PATH_ERROR_CODES.INVALID_ARGUMENT);
   for (const value of [void 0, null, 'a', {}, 7]) {

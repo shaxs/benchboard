@@ -975,7 +975,7 @@ test('a metadata path inside a protected root is refused before any byte is writ
 
 /* ------------------------------------------------------- command strategy */
 
-test('the Windows command strategy is explicit and never relies on a shell', (t) => {
+test('the Windows command strategy is explicit and never relies on a shell', { skip: process.platform !== 'win32' && 'Windows npm.cmd path fixtures' }, (t) => {
   const shim = 'C:\\fixture\\npm.cmd';
   const native = 'C:\\fixture\\npm.exe';
 
@@ -1017,7 +1017,7 @@ test('the Windows command strategy is explicit and never relies on a shell', (t)
   assert.equal(unknownPlatform.wrapForCmdExe, false, 'a non-Windows platform never wraps in cmd.exe');
 });
 
-test('the built command is an argument array with no shell and no metacharacters', () => {
+test('the built command is an argument array with no shell and no metacharacters', { skip: process.platform !== 'win32' && 'Windows npm.cmd path fixtures' }, () => {
   const resolved = resolveDependencyCommandStrategy({ platform: 'win32', executablePath: 'C:\\fixture\\npm.cmd' });
   const built = buildDependencyCommand(resolved, { command: 'C:\\fixture\\npm.cmd', args: ['ci', '--lockfile=package-lock.json'] });
   assert.equal(built.file, 'cmd.exe');
@@ -1397,7 +1397,7 @@ function holdDirectoryAsWorkingDirectory(directory) {
   };
 }
 
-test('a failure while committing a verified install reports a partial publication', async (t) => {
+test('a failure while committing a verified install reports a partial publication', { skip: process.platform !== 'win32' && 'relies on Windows refusing to rename a directory a process holds' }, async (t) => {
   const root = caseRoot(t, 'publication-partial');
   const sourceRoot = makeSourceRoot(root);
   const scratchRoot = sub(root, 'scratch');
@@ -1459,7 +1459,7 @@ test('a failure while committing a verified install reports a partial publicatio
   assert.deepEqual(fs.readdirSync(scratchRoot), [], 'the staging debris is confined to the scratch root');
 });
 
-test('a failure after a verified install was committed reports the retained publication', async (t) => {
+test('a failure after a verified install was committed reports the retained publication', { skip: process.platform !== 'win32' && 'relies on Windows refusing to remove a directory a process holds' }, async (t) => {
   const root = caseRoot(t, 'publication-retained');
   const sourceRoot = makeSourceRoot(root);
   const scratchRoot = sub(root, 'scratch');

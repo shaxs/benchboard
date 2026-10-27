@@ -24,7 +24,8 @@ function copySource(source, destination) {
       return !relative || !excluded.has(relative.split(path.sep)[0].toLowerCase());
     },
   });
-  fs.cpSync(path.join(INSTALLATION_ROOT, 'starter', 'node_modules'), path.join(destination, 'node_modules'), { recursive: true });
+  // verbatimSymlinks keeps POSIX .bin links relative to the copy instead of pointing back into starter/.
+  fs.cpSync(path.join(INSTALLATION_ROOT, 'starter', 'node_modules'), path.join(destination, 'node_modules'), { recursive: true, verbatimSymlinks: true });
 }
 
 async function openDrawer(page) {

@@ -311,3 +311,18 @@ test('on Windows a scratch parent too deep for executables and Chromium refuses 
   assert.equal(fs.existsSync(f.outputRoot), false);
   assert.deepEqual(fs.readdirSync(deep), []);
 });
+
+test('POSIX npm .bin symlinks in prepared dependencies are left out, while any other dependency link is still refused', async t => {
+  const f = fixture(t);
+  const bin = path.join(f.canonicalRoot, 'node_modules', '.bin');
+  fs.mkdirSync(bin, { recursive: true });
+  try { fs.symlinkSync('../vite/bin/vite.js', path.join(bin, 'vite')); }
+  catch (error) { if (error.code === 'EPERM') return t.skip('host cannot create symbolic links without privilege'); throw error; }
+  const claim = await stageFrozen(f, f, { canonicalRoot: f.canonicalRoot });
+  assert.equal(fs.existsSync(path.join(claim.appRoot, 'node_modules', 'vite', 'bin', 'vite.js')), true);
+  assert.equal(fs.existsSync(path.join(claim.appRoot, 'node_modules', '.bin', 'vite')), false, 'the .bin link is neither followed nor copied');
+  assert.deepEqual(cleanupScratch(claim), { removed: true, residue: [], errors: [] });
+  fs.rmSync(f.outputRoot, { recursive: true, force: true });
+  fs.symlinkSync('../vite/bin/vite.js', path.join(f.canonicalRoot, 'node_modules', 'vite-link'));
+  await assert.rejects(stageFrozen(f, f, { canonicalRoot: f.canonicalRoot }), error => error.code === 'UNSAFE_ENTRY');
+});

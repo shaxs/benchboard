@@ -120,11 +120,15 @@ export async function verifySelection(request) {
 }
 
 // No ignored directory names: dependencies and generated scratch receive the same link/special checks.
-function scan(root, { maxFiles = 100000, maxBytes = 2147483648 } = {}) {
+// skipBinLinks: on POSIX npm writes node_modules/**/.bin entries as symlinks. Stages invoke tools by
+// their package path, never through .bin, so those links are left out (not followed, not copied);
+// any other link is still refused.
+function scan(root, { maxFiles = 100000, maxBytes = 2147483648, skipBinLinks = false } = {}) {
   assertDirectoryChain(root);
   const entries = [], folded = new Set(); let bytes = 0;
   function walk(at, relative) {
     const stat = fs.lstatSync(at);
+    if (skipBinLinks && stat.isSymbolicLink() && path.basename(path.dirname(at)) === '.bin') return;
     if (stat.isSymbolicLink() || (!stat.isDirectory() && !stat.isFile())) refuse('UNSAFE_ENTRY', 'Links and special files refused', { path: relative });
     const segments = relative.split('/');
     if (relative && segments.some(s => !s || s === '.' || s === '..' || /[\\:\x00-\x1f\x7f]/.test(s) || /[. ]$/.test(s))) refuse('INVALID_PATH', 'Unsafe inventory path');
@@ -234,7 +238,7 @@ export async function stageFrozen(verified, request, options = {}) {
   assertDirectoryChain(scratchParent);
   throwIfAborted(request.signal, 'preflight');
   let dependencies;
-  try { dependencies = scan(dependencyRoot); }
+  try { dependencies = scan(dependencyRoot, { skipBinLinks: true }); }
   catch (error) {
     if (error.code === 'ENOENT') throw new EvaluationInfrastructureError('preflight', 'MISSING_PREREQUISITE', 'Prepared starter/node_modules is missing');
     throw error;

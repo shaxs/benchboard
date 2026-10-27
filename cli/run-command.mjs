@@ -127,8 +127,14 @@ async function runSteps(options, signal) {
   env.BENCHBOARD_PROMPT_FILE = promptFile;
   progress(`folder ${plan.dir}`);
   progress('copying the starter code and installing its dependencies (about a minute)');
-  await initializeCommand({ '--output': runRoot, '--dependency-mode': 'install', '--npm-executable': npm,
-    '--source-root': path.join(INSTALLATION_ROOT, 'starter') }, { signal });
+  await initializeCommand({ '--output': runRoot }, { signal });
+  // A plain `npm ci` from the workload's own lockfile, for the agent's tests only: scoring always
+  // stages the canonical starter dependencies, and init's install mode refuses the .bin symlinks
+  // npm writes on Linux and macOS.
+  const install = await runAgentProcess(spawnPlanFor(npm, ['ci', '--no-audit', '--no-fund']), { cwd: workspace, env: process.env,
+    signal, timeoutMs: 10 * 60000, stdoutFile: path.join(agentRoot, 'npm-ci.out.log'), stderrFile: path.join(agentRoot, 'npm-ci.err.log') });
+  if (install.cancelled) throw new CommandError('cancelled');
+  if (install.exitCode !== 0) throw new RunFailure(`npm ci in the workspace failed (${install.spawnError ?? 'exit ' + install.exitCode}); see ${agentRoot}`);
   const label = `${plan.profile.name}:${plan.model ?? 'unspecified'}`;
   await startCommand({ '--run': runRoot, '--model': label, '--worker-count': '1', '--declared-ceiling-minutes': String(plan.minutes) }, { signal });
   progress(`agent started (${label}); limit ${plan.minutes} minutes`);

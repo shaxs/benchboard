@@ -7,7 +7,9 @@ import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {createFrozenFixture,snapshotInputs,assertInputsUnchanged} from './helpers.mjs';
 
-test('S8 real facade attachment catch converts CLEANUP_FAILED only and preserves thrown integrity/refusal/unknown errors',async t=>{
+// The diagnostic child uses module.registerHooks (Node 22.15+); production code does not.
+const hooksAvailable=typeof (await import('node:module')).registerHooks==='function';
+test('S8 real facade attachment catch converts CLEANUP_FAILED only and preserves thrown integrity/refusal/unknown errors',{skip:!hooksAvailable&&'needs module.registerHooks (Node 22.15 or newer)'},async t=>{
   const f=await createFrozenFixture(t),before=snapshotInputs(f),requestFile=path.join(f.root,'facade-request.json'),childFile=path.join(f.root,'facade-catch-probe.mjs');
   const url=name=>new URL(`../../packages/evaluation/${name}.mjs`,import.meta.url).href;
   fs.writeFileSync(requestFile,JSON.stringify(f.request));
