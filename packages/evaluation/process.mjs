@@ -75,14 +75,15 @@ function reapTree(pid) {
       catch (error) { clearTimeout(bound); finish(error?.code === 'ESRCH' ? 'root-gone' : 'failed'); return; }
       // SIGKILL delivery is asynchronous: like taskkill, confirm only once the group has exited
       // (bounded by the same wait; an unreaped orphan keeps it unconfirmed rather than assumed).
+      // Referenced on purpose: settlement awaits this answer, and the poll is itself bounded.
       const started = Date.now();
       const poll = setInterval(() => {
         let gone = false;
         try { process.kill(-pid, 0); } catch (error) { gone = error?.code === 'ESRCH'; }
-        if (gone) { clearInterval(poll); clearTimeout(bound); finish('confirmed'); }
-        else if (Date.now() - started >= REAP_WAIT_MS) clearInterval(poll); // the bound reports it
+        if (!gone && Date.now() - started < REAP_WAIT_MS) return;
+        clearInterval(poll); clearTimeout(bound);
+        finish(gone ? 'confirmed' : pidGone(pid) ? 'root-gone' : 'failed');
       }, 10);
-      poll.unref();
     }
   });
 }
