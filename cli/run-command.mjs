@@ -168,6 +168,10 @@ async function runSteps(options, signal) {
   }
   let tokensFile = null;
   if (outcome.tokens) { tokensFile = path.join(agentRoot, 'tokens.json'); writeJson(tokensFile, outcome.tokens); }
+  // node_modules is never part of the submission (freeze excludes it and scoring stages the canonical
+  // dependencies), but freeze refuses any link anywhere, and npm writes .bin links on Linux/macOS.
+  // The agent has stopped, so remove it; rmSync removes links themselves, never their targets.
+  fs.rmSync(path.join(workspace, 'node_modules'), { recursive: true, force: true });
   await freezeCommand({ '--run': runRoot });
   progress('evaluating (about three minutes)');
   let evaluation;

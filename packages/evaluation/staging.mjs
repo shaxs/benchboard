@@ -212,6 +212,9 @@ async function copyTree(source, target, entries, claim, signal) {
       try {
         if (!same(fs.fstatSync(handle), entry.stat)) refuse('SOURCE_CHANGED', 'Copy source replaced while opening');
         fs.writeFileSync(to, fs.readFileSync(handle), { flag: 'wx' });
+        // POSIX: keep execute bits (esbuild's native binary), and keep the copy owner-writable so
+        // scratch cleanup can remove it. Windows has no execute bit and read-only copies would block cleanup.
+        if (process.platform !== 'win32') fs.chmodSync(to, (entry.stat.mode & 0o777) | 0o200);
       } finally { fs.closeSync(handle); }
     }
     remember(claim, to);

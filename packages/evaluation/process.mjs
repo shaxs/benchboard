@@ -71,9 +71,18 @@ function reapTree(pid) {
       killer.once('close', status => { clearTimeout(bound); finish(status === 0 ? 'confirmed' : pidGone(pid) ? 'root-gone' : 'failed'); });
       killer.once('error', () => { clearTimeout(bound); finish(pidGone(pid) ? 'root-gone' : 'failed'); });
     } else {
-      clearTimeout(bound);
-      try { process.kill(-pid, 'SIGKILL'); finish('confirmed'); }
-      catch (error) { finish(error?.code === 'ESRCH' ? 'root-gone' : 'failed'); }
+      try { process.kill(-pid, 'SIGKILL'); }
+      catch (error) { clearTimeout(bound); finish(error?.code === 'ESRCH' ? 'root-gone' : 'failed'); return; }
+      // SIGKILL delivery is asynchronous: like taskkill, confirm only once the group has exited
+      // (bounded by the same wait; an unreaped orphan keeps it unconfirmed rather than assumed).
+      const started = Date.now();
+      const poll = setInterval(() => {
+        let gone = false;
+        try { process.kill(-pid, 0); } catch (error) { gone = error?.code === 'ESRCH'; }
+        if (gone) { clearInterval(poll); clearTimeout(bound); finish('confirmed'); }
+        else if (Date.now() - started >= REAP_WAIT_MS) clearInterval(poll); // the bound reports it
+      }, 10);
+      poll.unref();
     }
   });
 }

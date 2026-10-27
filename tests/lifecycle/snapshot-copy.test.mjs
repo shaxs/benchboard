@@ -631,7 +631,9 @@ test('cleanup preserves anything whose ownership chain or bytes cannot be proven
     `an equal-content ancestor replacement is caught (${error?.code})`,
   );
   assert.equal(fs.existsSync(path.join(snapA, 'sub', 'b.txt')), true, 'bytes below a replaced ancestor are never touched');
-  assert.ok(error.fate.foreignPreserved.some((entry) => entry.reason.includes('ownership-chain-not-provable')), JSON.stringify(error.fate.foreignPreserved));
+  // Where the filesystem reuses the deleted directory's inode at once (Linux), the recreated file is
+  // reported as an identical-content foreign file instead; either way it is preserved, not deleted.
+  assert.ok(error.fate.foreignPreserved.some((entry) => entry.reason.includes('ownership-chain-not-provable') || entry.reason.includes('replaced-by-identical-content-foreign-file')), JSON.stringify(error.fate.foreignPreserved));
   assert.equal(error.fate.removedFiles.includes('sub/b.txt'), false, 'no deletion through a replaced ancestor');
 
   // (b) a created file is edited in place: same inode, different bytes. The
