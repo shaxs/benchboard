@@ -19,3 +19,7 @@ _backups/
 .gitnexus/
 .code-review-graph/
 .claude/
+
+# editor and tool settings (local)
+.mcp.json
+.vscode/
