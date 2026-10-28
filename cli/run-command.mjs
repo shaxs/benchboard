@@ -157,9 +157,11 @@ async function runSteps(options, signal) {
   if (agent.cancelled) throw new CommandError('cancelled');
   if (agent.spawnError) throw new RunFailure(`the agent could not start (${agent.spawnError}); see ${agentRoot}`);
   const stdout = fs.readFileSync(path.join(agentRoot, 'stdout.jsonl'), 'utf8');
-  const outcome = plan.profile.readOutcome({ stdout, executable: launch.executable, env, cwd: workspace, major: launch.major });
+  const outcome = plan.profile.readOutcome({ stdout, executable: launch.executable, env, cwd: workspace, major: launch.major,
+    exportFile: path.join(agentRoot, 'session-export.json') });
   summary.workedInWorkspace = workedInWorkspace(outcome, workspace);
   summary.tokens = tokenSummary(outcome.tokens, outcome.tokenSource);
+  if (!outcome.tokens && outcome.tokenNote) summary.tokenNote = outcome.tokenNote;
   if (!outcome.tokens && outcome.approximateTokens) summary.approximateTokens = { ...outcome.approximateTokens, note: 'stream step totals; may miss the final step' };
   if (summary.workedInWorkspace === false) {
     summary.status = 'AGENT_WORKED_ELSEWHERE';

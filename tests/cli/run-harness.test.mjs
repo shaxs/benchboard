@@ -102,6 +102,45 @@ test('OpenCode: session id and approximate stream totals; export totals win and 
   assert.deepEqual(harnessProfile('opencode').agentArgs({ model: 'p/m', prompt: 'P', major: 1 }), ['run', '--format', 'json', '--model', 'p/m', 'P']);
 });
 
+test('OpenCode outcome: a large export is read whole from a file, PWD names the real folder, failures say why', async t => {
+  const root = temp(t), workspace = path.join(root, 'workspace');
+  fs.mkdirSync(workspace);
+  // A fake `opencode export` that reports PWD as the session folder (as 1.15.5 does), writes
+  // several megabytes and exits at once, and fails for an unknown session.
+  const script = path.join(root, 'fake-opencode.mjs');
+  fs.writeFileSync(script, [
+    "const id = process.argv[process.argv.length - 1];",
+    "if (id !== 'ses_A') { console.error('Session not found: ' + id); process.exit(1); }",
+    "const info = { directory: process.env.PWD, tokens: { input: 1, output: 2, reasoning: 3, cache: { read: 4, write: 0 } } };",
+    "process.stdout.write(JSON.stringify({ info, messages: [{ info: {}, parts: [{ text: 'x'.repeat(4 << 20) }] }] }));",
+    'process.exit(0);',
+  ].join('\n'));
+  let executable;
+  if (process.platform === 'win32') {
+    executable = path.join(root, 'opencode.cmd');
+    fs.writeFileSync(executable, `@"${process.execPath}" "${script}" %*\r\n`);
+  } else {
+    executable = path.join(root, 'opencode');
+    fs.writeFileSync(executable, `#!/bin/sh\nexec "${process.execPath}" "${script}" "$@"\n`, { mode: 0o755 });
+  }
+  const read = (stdout, name) => harnessProfile('opencode').readOutcome({ stdout, executable, env: { ...process.env, PWD: root }, cwd: workspace, major: 1,
+    exportFile: path.join(root, name) });
+  const ok = read(OPENCODE_STREAM, 'ok.json');
+  assert.deepEqual(ok.tokens, neutralTokens('opencode-session-export', { input: 5, output: 5, cacheRead: 4 }));
+  assert.equal(ok.tokenNote, null);
+  assert.equal(workedInWorkspace(ok, workspace), true, 'an inherited PWD is replaced by the real working folder');
+  assert.ok(fs.statSync(path.join(root, 'ok.json')).size > 4 << 20, 'the whole export is kept as evidence');
+  const failed = read(OPENCODE_STREAM.replaceAll('ses_A', 'ses_GONE'), 'failed.json');
+  assert.equal(failed.tokens, null);
+  assert.match(failed.tokenNote, /^session export failed \(exit 1\): .*Session not found: ses_GONE/);
+  assert.equal(read('', 'none.json').tokenNote, 'no session id in the agent output');
+  // Every launched process also gets a PWD matching its working folder.
+  const pwd = await runAgentProcess({ file: process.execPath, args: ['-e', 'console.log(process.env.PWD)'] },
+    { cwd: workspace, env: { ...process.env, PWD: root }, timeoutMs: 30000, stdoutFile: path.join(root, 'pwd.out'), stderrFile: path.join(root, 'pwd.err') });
+  assert.equal(pwd.exitCode, 0);
+  assert.equal(fs.readFileSync(path.join(root, 'pwd.out'), 'utf8').trim(), workspace);
+});
+
 test('Claude Code: result modelUsage totals (cache included in input), usage fallback, init cwd', () => {
   const lines = events => events.map(event => JSON.stringify(event)).join('\n');
   const withModels = parseClaudeStream(lines([

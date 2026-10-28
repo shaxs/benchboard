@@ -145,21 +145,33 @@ const opencode = Object.freeze({
     const result = spawnSync(plan.file, plan.args, { env, encoding: 'utf8', timeout: 60000, windowsHide: true, windowsVerbatimArguments: plan.windowsVerbatimArguments });
     return { major: opencodeMajor((result.stdout ?? '') + (result.stderr ?? '')) };
   },
-  /** Prefers the session export (true totals); falls back to the stream, which can miss the last step. */
-  readOutcome({ stdout, executable, env, cwd, major }) {
+  /**
+   * Prefers the session export (true totals); falls back to the stream, which can miss the last step.
+   * The export goes straight to `exportFile`: OpenCode exits right after writing, which can cut a
+   * large export short on a pipe. `tokenNote` says why tokens are missing, when they are.
+   */
+  readOutcome({ stdout, executable, env, cwd, major, exportFile }) {
     const stream = parseOpencodeStream(stdout);
-    const result = { tokens: null, approximateTokens: null, tokenSource: null, directory: null, sessionId: stream.sessionId };
+    const result = { tokens: null, approximateTokens: null, tokenSource: null, directory: null, sessionId: stream.sessionId, tokenNote: null };
     if (stream.totals.steps > 0) result.approximateTokens = stream.totals;
-    if (stream.sessionId) {
-      const args = major !== null && major < 2 ? ['export', stream.sessionId] : ['session', 'export', stream.sessionId];
-      const plan = spawnPlanFor(executable, args, { env });
-      const exported = spawnSync(plan.file, plan.args, { cwd, env, encoding: 'utf8', timeout: 120000, maxBuffer: 268435456, windowsHide: true, windowsVerbatimArguments: plan.windowsVerbatimArguments });
-      const parsed = exported.status === 0 ? parseOpencodeExport(exported.stdout ?? '') : null;
-      if (parsed) {
-        result.directory = parsed.directory;
-        if (parsed.totals) { result.tokens = neutralTokens('opencode-session-export', parsed.totals); result.tokenSource = 'opencode session export'; }
-      }
+    if (!stream.sessionId) { result.tokenNote = 'no session id in the agent output'; return result; }
+    const args = major !== null && major < 2 ? ['export', stream.sessionId] : ['session', 'export', stream.sessionId];
+    const plan = spawnPlanFor(executable, args, { env });
+    const out = fs.openSync(exportFile, 'w');
+    let exported;
+    try {
+      exported = spawnSync(plan.file, plan.args, { cwd, env: { ...env, PWD: cwd }, stdio: ['ignore', out, 'pipe'], encoding: 'utf8', timeout: 120000, maxBuffer: 16777216, windowsHide: true, windowsVerbatimArguments: plan.windowsVerbatimArguments });
+    } finally { fs.closeSync(out); }
+    if (exported.status !== 0) {
+      const reason = exported.error?.code ?? `exit ${exported.status}`;
+      result.tokenNote = `session export failed (${reason}): ${String(exported.stderr ?? '').trim().slice(-300)}`;
+      return result;
     }
+    const parsed = parseOpencodeExport(fs.readFileSync(exportFile, 'utf8'));
+    if (!parsed) { result.tokenNote = 'session export output is not readable JSON'; return result; }
+    result.directory = parsed.directory;
+    if (parsed.totals) { result.tokens = neutralTokens('opencode-session-export', parsed.totals); result.tokenSource = 'opencode session export'; }
+    else result.tokenNote = 'session export has no token totals';
     return result;
   },
   judgeText(stdout) {

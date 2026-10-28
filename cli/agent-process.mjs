@@ -26,7 +26,9 @@ export function runAgentProcess(plan, { cwd, env, stdoutFile, stderrFile, timeou
     const startedAt = new Date(), started = performance.now();
     let timedOut = false, cancelled = false, settled = false, spawnError = null;
     const child = spawn(plan.file, plan.args, {
-      cwd, env, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true,
+      // PWD matches cwd: an inherited PWD names the launching shell's folder, and some harnesses
+      // (OpenCode) trust it over the real working directory.
+      cwd, env: { ...env, PWD: cwd }, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true,
       shell: plan.shell ?? false, windowsVerbatimArguments: plan.windowsVerbatimArguments ?? false,
       // A POSIX process group lets the ceiling kill grandchildren (dev servers, test runners).
       detached: process.platform !== 'win32',
