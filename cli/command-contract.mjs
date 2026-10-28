@@ -70,5 +70,7 @@ export const COMMANDS = Object.freeze({
     '--agent': value('Harness for --ai-judge: opencode or claude; default the run\'s harness.'),
     '--agent-bin': value('Explicit harness executable for --ai-judge.'),
     '--no-open': flag('Print the review page address without opening a browser (for SSH sessions).'),
+    '--host': value('Address to listen on; default 127.0.0.1 (this machine only). 0.0.0.0 makes the page reachable from your network.'),
+    '--port': value('Port to listen on; default any free port.'),
   }),
 });

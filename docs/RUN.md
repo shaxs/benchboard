@@ -49,7 +49,8 @@ the score, minutes and tokens.
 | Path | Contents |
 |---|---|
 | `summary.json` | Score and its eight areas, wall minutes, tokens, time-limit flag, screenshot list, AI and human UI scores once present. |
-| `agent/` | The prompt, the agent's raw output and logs, and `tokens.json` when the harness reported totals. |
+| `review.sh` / `review.cmd` | Opens the UI review for this run (see below). |
+| `agent/` | The prompt, the agent's raw output and logs, the OpenCode `session-export.json`, and `tokens.json` when the harness reported totals. |
 | `run/workspace/` | The agent's finished code. |
 | `run/`, `run.benchboard-results/` | BenchBoard's private run records and evaluation logs. |
 | `screens/` | The twelve screenshots and their `evidence.json`. |
@@ -59,16 +60,29 @@ A folder is used once. `run` refuses a folder that is not empty and never overwr
 
 ## Scoring the UI yourself
 
+Every finished run folder has a launcher for this: `review.sh` (Linux, macOS) or `review.cmd`
+(Windows). It is the same as:
+
 ```
 node cli/benchboard.mjs review --dir <RUN_FOLDER>
 ```
 
-This opens a local page with every starter and submission screenshot side by side and a short
-form for the seven UI categories. Positive points need a sentence about what improved over the
-starter, plus a choice of which screenshot pair shows it. Saving attaches the review to the
-report, adds a reviewed export folder and updates `summary.json` with the human UI score and the
-final quality out of 100. Over SSH, add `--no-open` and open the printed address yourself; the
-page only listens on 127.0.0.1, so forward the port.
+This builds the starter and the submission (about a minute) and opens a page with every starter
+and submission screenshot side by side, links to both apps running live so you can click through
+them, and a short form for the seven UI categories. Positive points need a sentence about what
+improved over the starter, plus a choice of which screenshot pair shows it. Saving attaches the
+review to the report, adds a reviewed export folder and updates `summary.json` with the human UI
+score and the final quality out of 100.
+
+The page only listens on this machine by default. When the run is on another machine, either:
+
+- listen on the network: `./review.sh --host 0.0.0.0 --port 8080 --no-open`, then open the
+  printed address from your own computer (the port must be allowed through its firewall); or
+- keep it private and forward the port: `./review.sh --port 8080 --no-open` on the server,
+  `ssh -L 8080:127.0.0.1:8080 <server>` on your computer, then open the printed address.
+
+Either way, the printed address includes a private token; without it the page refuses requests.
+Run the launcher as the user that made the run, so it can read the run folder.
 
 To get only the advisory AI score for an existing run:
 

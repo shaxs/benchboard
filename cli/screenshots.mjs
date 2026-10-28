@@ -16,7 +16,8 @@ export const artifactIdOf = (target, width, view) => `${target}-${width}-${view}
 
 const excluded = new Set(SELECTION_POLICY_EXCLUSIONS.map(name => name.toLowerCase()));
 
-function copySource(source, destination) {
+/** Copies an app's source (without excluded names) and the canonical starter dependencies. */
+export function copySource(source, destination) {
   fs.cpSync(source, destination, {
     recursive: true,
     filter: from => {

@@ -5,7 +5,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { runPlanOf, RunFailure } from '../../cli/run-command.mjs';
+import { runPlanOf, RunFailure, reviewLauncherOf } from '../../cli/run-command.mjs';
+import { listenAddressOf } from '../../cli/review-command.mjs';
+import { siteFile } from '../../cli/live-apps.mjs';
 import { AGENT_PROMPT, harnessProfile, neutralTokens, opencodeMajor, parseClaudeStream, parseOpencodeExport, parseOpencodeStream, resolveExecutable, spawnPlanFor, workedInWorkspace } from '../../cli/harness-profiles.mjs';
 import { runAgentProcess } from '../../cli/agent-process.mjs';
 import { judgePrompt, parseJudgeReply } from '../../cli/ai-judge.mjs';
@@ -218,6 +220,42 @@ test('AI judge: prompt names every screenshot and avoids cmd.exe metacharacters;
   assert.equal(parseJudgeReply(JSON.stringify({ scores: { ...scores, polish: 6 } })), null);
   assert.equal(parseJudgeReply(JSON.stringify({ scores: { ...scores, drawer: 1.5 } })), null);
   assert.equal(parseJudgeReply('no json'), null);
+});
+
+test('review page address: loopback and any port by default; bad --host or --port is a usage error', () => {
+  assert.deepEqual(listenAddressOf({}), { host: '127.0.0.1', port: 0 });
+  assert.deepEqual(listenAddressOf({ '--host': '0.0.0.0', '--port': '8080' }), { host: '0.0.0.0', port: 8080 });
+  for (const options of [{ '--port': '70000' }, { '--port': '-1' }, { '--port': 'eighty' }, { '--host': 'a b' }, { '--host': '' }]) {
+    assert.throws(() => listenAddressOf(options), error => error instanceof RunFailure && error.category === 'usage', JSON.stringify(options));
+  }
+});
+
+test('live app files: built files are served, client routes fall back to index.html, nothing outside the site', t => {
+  const root = temp(t), site = path.join(root, 'site');
+  fs.mkdirSync(path.join(site, 'assets'), { recursive: true });
+  fs.writeFileSync(path.join(site, 'index.html'), '<!doctype html>');
+  fs.writeFileSync(path.join(site, 'assets', 'app.js'), '');
+  fs.writeFileSync(path.join(root, 'secret.txt'), 'no');
+  assert.deepEqual(siteFile(site, '/'), { file: path.join(site, 'index.html'), type: 'text/html; charset=utf-8' });
+  assert.deepEqual(siteFile(site, '/assets/app.js'), { file: path.join(site, 'assets', 'app.js'), type: 'text/javascript; charset=utf-8' });
+  assert.equal(siteFile(site, '/issues/BB-001').file, path.join(site, 'index.html'));
+  assert.equal(siteFile(site, '/assets/missing.js'), null);
+  for (const escape of ['/../secret.txt', '/%2e%2e/secret.txt', '/..%5csecret.txt', '/assets/..%2f..%2fsecret.txt', '/%E0%A4%A']) {
+    const found = siteFile(site, escape);
+    assert.ok(found === null || found.file.startsWith(site + path.sep), escape);
+    assert.notEqual(found?.file, path.join(root, 'secret.txt'), escape);
+  }
+});
+
+test('review launcher: run folders get a review.sh or review.cmd that passes options through', () => {
+  const sh = reviewLauncherOf({ dir: "/home/u/it's runs", node: '/usr/bin/node', repo: '/opt/benchboard', platform: 'linux' });
+  assert.equal(sh.name, 'review.sh');
+  assert.match(sh.text, /^#!\/bin\/sh\n/);
+  assert.ok(sh.text.includes(`exec '/usr/bin/node' '${path.join('/opt/benchboard', 'cli', 'benchboard.mjs')}' review --dir '/home/u/it'\\''s runs' "$@"\n`), sh.text);
+  const cmd = reviewLauncherOf({ dir: 'C:\\runs\\a', node: 'C:\\node\\node.exe', repo: 'C:\\bb', platform: 'win32' });
+  assert.equal(cmd.name, 'review.cmd');
+  assert.match(cmd.text, /review --dir "C:\\runs\\a" %\*\r\n$/);
+  assert.equal(reviewLauncherOf({ dir: 'C:\\runs\\100%', node: 'C:\\node.exe', repo: 'C:\\bb', platform: 'win32' }), null);
 });
 
 test('review worksheet: form + screenshots + template make a worksheet the accepted validator takes', () => {

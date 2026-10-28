@@ -98,6 +98,20 @@ function agentLaunch(plan, env) {
 
 const readJson = file => JSON.parse(fs.readFileSync(file, 'utf8'));
 const writeJson = (file, value) => fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', { flag: 'w' });
+/**
+ * A launcher for the run folder that opens this run's UI review; extra options pass through
+ * (e.g. --host 0.0.0.0 --port 8080). Null when a path cannot be quoted safely for cmd.exe.
+ */
+export function reviewLauncherOf({ dir, node = process.execPath, repo = INSTALLATION_ROOT, platform = process.platform }) {
+  const cli = path.join(repo, 'cli', 'benchboard.mjs');
+  if (platform === 'win32') {
+    if ([dir, node, cli].some(value => /["%!^&|<>\r\n]/.test(value))) return null;
+    return { name: 'review.cmd', text: `@rem Opens the UI review for this run. Extra options pass through, e.g. --host 0.0.0.0 --port 8080\r\n@"${node}" "${cli}" review --dir "${dir}" %*\r\n` };
+  }
+  const quote = value => `'${value.replaceAll("'", `'\\''`)}'`;
+  return { name: 'review.sh', text: `#!/bin/sh\n# Opens the UI review for this run. Extra options pass through, e.g. --host 0.0.0.0 --port 8080\nexec ${quote(node)} ${quote(cli)} review --dir ${quote(dir)} "$@"\n` };
+}
+
 const tokenSummary = (tokens, source) => (tokens ? { input: tokens.inputTokens, output: tokens.outputTokens, cacheRead: tokens.cacheReadTokens, total: tokens.inputTokens + tokens.outputTokens, source } : null);
 
 export async function runCommand(options, { signal } = {}) {
@@ -219,7 +233,10 @@ async function runSteps(options, signal) {
     }
     writeJson(summaryFile, summary);
   }
-  progress(`done; summary in ${summaryFile}. Human UI review: node cli/benchboard.mjs review --dir "${plan.dir}"`);
+  const launcher = summary.screenshots?.evidence ? reviewLauncherOf({ dir: plan.dir }) : null;
+  if (launcher) fs.writeFileSync(path.join(plan.dir, launcher.name), launcher.text, { mode: 0o755 });
+  progress(`done; summary in ${summaryFile}. Human UI review: ${launcher ? path.join(plan.dir, launcher.name)
+    : `node cli/benchboard.mjs review --dir "${plan.dir}"`}`);
   return Object.freeze({ command: 'run', status: summary.status, dir: plan.dir, agent: summary.agent, model: summary.model,
     automated: summary.automated, wallMinutes: summary.wallMinutes, timedOut: agent.timedOut, tokens: summary.tokens,
     aiUI: summary.aiJudge?.total ?? null, humanUI: null, summary: summaryFile });

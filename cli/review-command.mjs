@@ -1,6 +1,7 @@
 // `review`: human UI scoring for a finished `run` folder without handling any files. It serves a
-// loopback-only page with the twelve screenshots side by side, builds the bound worksheet from the
-// form and attaches it through the existing `ui` command. With --ai-judge it runs the judge instead.
+// page (loopback unless --host says otherwise) with the twelve screenshots side by side and the
+// starter and submission as live apps, builds the bound worksheet from the form and attaches it
+// through the existing `ui` command. With --ai-judge it runs the judge instead.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -14,6 +15,7 @@ import { uiCommand } from './ui-command.mjs';
 import { exportCommand } from './export-command.mjs';
 import { RUN_LAYOUT, RunFailure } from './run-command.mjs';
 import { WIDTHS, VIEWS, artifactIdOf, worksheetEvidence } from './screenshots.mjs';
+import { buildLiveApps, siteFile } from './live-apps.mjs';
 import { HarnessError, harnessProfile, resolveExecutable } from './harness-profiles.mjs';
 
 const CATEGORY_LABELS = Object.freeze({
@@ -51,8 +53,11 @@ export function worksheetFrom(template, evidence, form, { reviewId, reviewedAt }
     evidence: worksheetEvidence(evidence), scores, notes, improvements };
 }
 
-function pageHtml({ summary, token }) {
+function pageHtml({ summary, token, live }) {
   const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const liveLinks = ['starter', 'submission'].map(target => (live[target]
+    ? `<a href="/app/${target}/" target="_blank" rel="noopener">${target === 'starter' ? 'Starter' : 'Submission'}</a>`
+    : `${target === 'starter' ? 'Starter' : 'Submission'} (did not build; see the terminal)`)).join(' · ');
   const pairs = WIDTHS.flatMap(width => VIEWS.map(view => ({ width, view })));
   const gallery = pairs.map(({ width, view }) => `
     <section class="pair"><h3>${width}px · ${view}</h3><div class="shots">
@@ -86,7 +91,7 @@ label{display:block;margin:4px 0;font-size:13px}textarea,select,input{width:100%
 button{width:100%;padding:10px;border:0;border-radius:8px;background:var(--accent);color:#fff;font:inherit;font-weight:600;cursor:pointer}
 #result{margin-top:10px;white-space:pre-wrap}
 </style></head><body><main>
-<div><h1>UI review</h1><p class="muted">${esc([summary.agent, summary.model].filter(Boolean).join(' · '))} · automated ${esc(summary.automated)} / 80. Compare each submission with the starter. Positive points need a visible improvement over the starter. Click a screenshot to enlarge it.</p>${gallery}</div>
+<div><h1>UI review</h1><p class="muted">${esc([summary.agent, summary.model].filter(Boolean).join(' · '))} · automated ${esc(summary.automated)} / 80. Compare each submission with the starter. Positive points need a visible improvement over the starter. Click a screenshot to enlarge it.</p><p>Try the live apps in a new tab: ${liveLinks}. Each keeps its own browser storage, so changes you make there persist between visits.</p>${gallery}</div>
 <form id="f"><label>Reviewer <input name="reviewer" required minlength="2" value="${esc(os.userInfo().username)}"></label>${categories}
 <button type="submit">Save review</button><div id="result" role="status"></div></form>
 </main><script>
@@ -108,7 +113,18 @@ function openBrowser(url) {
   try { spawn(file, args, { stdio: 'ignore', detached: true, windowsHide: true }).on('error', () => {}).unref(); } catch { /* the URL is printed */ }
 }
 
-async function humanReview({ dir, summary, summaryFile }, { signal, open }) {
+/** Review server address from --host and --port; loopback and any free port by default. */
+export function listenAddressOf(options) {
+  const host = options['--host'] ?? '127.0.0.1';
+  const portText = options['--port'] ?? '0';
+  if (!/^\d{1,5}$/.test(portText) || Number(portText) > 65535) throw new RunFailure('--port must be a whole number from 0 (any free port) to 65535', 'usage');
+  if (!/^[A-Za-z0-9.:_-]{1,255}$/.test(host)) throw new RunFailure('--host must be an address or host name to listen on, e.g. 0.0.0.0', 'usage');
+  return { host, port: Number(portText) };
+}
+
+const LOOPBACK = new Set(['127.0.0.1', '::1', 'localhost']);
+
+async function humanReview({ dir, summary, summaryFile }, { signal, open, host, port }) {
   const reviewRoot = path.join(dir, 'review');
   fs.mkdirSync(reviewRoot, { recursive: true });
   const stamp = new Date().toISOString().replace(/[-:.]/g, '');
@@ -117,47 +133,70 @@ async function humanReview({ dir, summary, summaryFile }, { signal, open }) {
   const template = JSON.parse(fs.readFileSync(templateFile, 'utf8'));
   const screensRoot = summary.screenshots.root, token = crypto.randomBytes(16).toString('hex');
   const allowed = new Set(summary.screenshots.evidence.map(entry => entry.artifactId));
-  return await new Promise((resolve, reject) => {
-    const server = http.createServer(async (request, response) => {
-      const url = new URL(request.url, 'http://127.0.0.1');
-      const send = (status, type, body) => { response.writeHead(status, { 'content-type': type, 'cache-control': 'no-store' }); response.end(body); };
-      if (url.searchParams.get('t') !== token) return send(403, 'text/plain', 'forbidden');
-      if (request.method === 'GET' && url.pathname === '/') return send(200, 'text/html; charset=utf-8', pageHtml({ summary, token }));
-      const shot = /^\/screens\/([^/]+)$/.exec(url.pathname);
-      if (request.method === 'GET' && shot && allowed.has(shot[1])) return send(200, 'image/png', fs.readFileSync(path.join(screensRoot, shot[1])));
-      if (request.method !== 'POST' || url.pathname !== '/submit') return send(404, 'text/plain', 'not found');
-      let body = '';
-      for await (const chunk of request) { body += chunk; if (body.length > 1048576) return send(413, 'application/json', '{"error":"too large"}'); }
-      try {
-        const worksheet = worksheetFrom(template, summary.screenshots.evidence, JSON.parse(body),
-          { reviewId: `review-${crypto.randomUUID()}`, reviewedAt: new Date().toISOString() });
-        // The accepted validator's own message tells the reviewer what to fix.
-        validateUIWorksheetFacts(worksheet, template);
-        const worksheetFile = path.join(reviewRoot, `worksheet-${stamp}.json`);
-        writeJson(worksheetFile, worksheet);
-        const attached = await uiCommand({ '--run': summary.runRoot, '--input': worksheetFile, '--review-root': screensRoot });
-        const exportDir = path.join(dir, `export-reviewed-${stamp}`);
-        await exportCommand({ '--run': summary.runRoot, '--evaluation': summary.evaluation.evaluationId, '--report': attached.reportId, '--output': exportDir });
-        const record = { reportId: attached.reportId, reviewer: worksheet.reviewer, reviewedAt: worksheet.reviewedAt, humanUI: attached.humanUI, quality: attached.quality, export: exportDir };
-        summary.humanReviews = [...(summary.humanReviews ?? []), record];
-        Object.assign(summary, { humanUI: attached.humanUI, quality: attached.quality });
-        writeJson(summaryFile, summary);
-        send(200, 'application/json', JSON.stringify(record));
-        server.close();
-        resolve(record);
-      } catch (error) {
-        send(400, 'application/json', JSON.stringify({ error: error?.name === 'UIWorksheetError' ? error.message : 'the review could not be attached; see the terminal' }));
-        if (error?.name !== 'UIWorksheetError') progress(`attach failed: ${error?.message ?? error}`);
-      }
+  progress('building the starter and the submission for live viewing (about a minute)');
+  const live = await buildLiveApps(summary.workspace);
+  for (const [target, log] of Object.entries(live.failures)) progress(`the ${target} did not build, so it has no live view:\n${log}`);
+  // The link carries the token; the page then sets it as a cookie so the live apps' own asset requests pass.
+  const cookie = `bbreview=${token}`;
+  const authorized = (request, url) => url.searchParams.get('t') === token
+    || String(request.headers.cookie ?? '').split(/;\s*/).includes(cookie);
+  try {
+    return await new Promise((resolve, reject) => {
+      const server = http.createServer(async (request, response) => {
+        const url = new URL(request.url, 'http://127.0.0.1');
+        const send = (status, type, body, headers = {}) => { response.writeHead(status, { 'content-type': type, 'cache-control': 'no-store', ...headers }); response.end(body); };
+        if (!authorized(request, url)) return send(403, 'text/plain', 'forbidden: open the full link printed in the terminal');
+        if (request.method === 'GET' && url.pathname === '/') {
+          return send(200, 'text/html; charset=utf-8', pageHtml({ summary, token, live: live.sites }),
+            { 'set-cookie': `${cookie}; HttpOnly; SameSite=Strict; Path=/` });
+        }
+        const shot = /^\/screens\/([^/]+)$/.exec(url.pathname);
+        if (request.method === 'GET' && shot && allowed.has(shot[1])) return send(200, 'image/png', fs.readFileSync(path.join(screensRoot, shot[1])));
+        const app = /^\/app\/(starter|submission)(\/.*)?$/.exec(url.pathname);
+        if (request.method === 'GET' && app && live.sites[app[1]]) {
+          if (!app[2]) return send(301, 'text/plain', '', { location: `/app/${app[1]}/` });
+          const found = siteFile(live.sites[app[1]], app[2]);
+          return found ? send(200, found.type, fs.readFileSync(found.file)) : send(404, 'text/plain', 'not found');
+        }
+        if (request.method !== 'POST' || url.pathname !== '/submit') return send(404, 'text/plain', 'not found');
+        let body = '';
+        for await (const chunk of request) { body += chunk; if (body.length > 1048576) return send(413, 'application/json', '{"error":"too large"}'); }
+        try {
+          const worksheet = worksheetFrom(template, summary.screenshots.evidence, JSON.parse(body),
+            { reviewId: `review-${crypto.randomUUID()}`, reviewedAt: new Date().toISOString() });
+          // The accepted validator's own message tells the reviewer what to fix.
+          validateUIWorksheetFacts(worksheet, template);
+          const worksheetFile = path.join(reviewRoot, `worksheet-${stamp}.json`);
+          writeJson(worksheetFile, worksheet);
+          const attached = await uiCommand({ '--run': summary.runRoot, '--input': worksheetFile, '--review-root': screensRoot });
+          const exportDir = path.join(dir, `export-reviewed-${stamp}`);
+          await exportCommand({ '--run': summary.runRoot, '--evaluation': summary.evaluation.evaluationId, '--report': attached.reportId, '--output': exportDir });
+          const record = { reportId: attached.reportId, reviewer: worksheet.reviewer, reviewedAt: worksheet.reviewedAt, humanUI: attached.humanUI, quality: attached.quality, export: exportDir };
+          summary.humanReviews = [...(summary.humanReviews ?? []), record];
+          Object.assign(summary, { humanUI: attached.humanUI, quality: attached.quality });
+          writeJson(summaryFile, summary);
+          send(200, 'application/json', JSON.stringify(record));
+          server.close();
+          resolve(record);
+        } catch (error) {
+          send(400, 'application/json', JSON.stringify({ error: error?.name === 'UIWorksheetError' ? error.message : 'the review could not be attached; see the terminal' }));
+          if (error?.name !== 'UIWorksheetError') progress(`attach failed: ${error?.message ?? error}`);
+        }
+      });
+      signal?.addEventListener('abort', () => { server.close(); reject(new CommandError('cancelled')); }, { once: true });
+      server.on('error', error => reject(new RunFailure(`the review page could not listen on ${host}:${port} (${error.code ?? error.message})`)));
+      server.listen(port, host, () => {
+        const shown = host === '0.0.0.0' || host === '::' ? os.hostname() : host.includes(':') ? `[${host}]` : host;
+        const pageUrl = `http://${shown}:${server.address().port}/?t=${token}`;
+        progress(`review page: ${pageUrl}`);
+        if (!LOOPBACK.has(host)) progress('this page is reachable from other machines; only people with the full link can open it');
+        progress('waiting for you to save the review (Ctrl+C to stop)');
+        if (open) openBrowser(pageUrl);
+      });
     });
-    signal?.addEventListener('abort', () => { server.close(); reject(new CommandError('cancelled')); }, { once: true });
-    server.listen(0, '127.0.0.1', () => {
-      const pageUrl = `http://127.0.0.1:${server.address().port}/?t=${token}`;
-      progress(`review page: ${pageUrl}`);
-      progress('waiting for you to save the review (Ctrl+C to stop)');
-      if (open) openBrowser(pageUrl);
-    });
-  });
+  } finally {
+    live.close();
+  }
 }
 
 async function aiReview({ summary, summaryFile }, options) {
@@ -176,12 +215,13 @@ async function aiReview({ summary, summaryFile }, options) {
 export async function reviewCommand(options, { signal } = {}) {
   if (signal?.aborted) throw new CommandError('cancelled');
   try {
+    const address = listenAddressOf(options);
     const loaded = loadRun(options['--dir']);
     if (options['--ai-judge'] !== undefined) {
       const judged = await aiReview(loaded, options);
       return Object.freeze({ command: 'review', mode: 'ai', aiUI: judged.total, scores: judged.scores, summary: loaded.summaryFile });
     }
-    const record = await humanReview(loaded, { signal, open: options['--no-open'] !== true });
+    const record = await humanReview(loaded, { signal, open: options['--no-open'] !== true, ...address });
     return Object.freeze({ command: 'review', mode: 'human', ...record, summary: loaded.summaryFile });
   } catch (error) {
     if (error instanceof RunFailure || error instanceof HarnessError) {
